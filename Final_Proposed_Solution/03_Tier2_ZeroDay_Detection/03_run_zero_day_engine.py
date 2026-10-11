@@ -7,7 +7,9 @@ Project: Hybrid Open-Set Multi-Signal Zero-Day Engine (HOMZ-Engine)
 
 Architecture:
   Canonical 4-Signal Novelty Detection & Open-Set Rejection Architecture (Step 10):
-    - Signal 1: Confidence Novelty (S_C = 1.0 - P_max)
+    - Signal 1: Logit Free Energy Novelty (S_E = -T * log(sum(exp(f_k / T))))
+                Derived from unnormalized XGBoost logits (output_margin=True);
+                resolves the Softmax 100%-sum overconfidence fallacy.
     - Signal 2: Log-Manifold Ledoit-Wolf Mahalanobis Distance (S_M)
     - Signal 3: Decision Tree Leaf-Space Traversal Novelty (S_L = 1.0 - LeafSim)
     - Signal 4: Relative Neighborhood Margin Distance Ratio (S_R = D_M / D_other)
@@ -19,6 +21,7 @@ Calibration & Rejection Protocol:
        ranks Z_i in [0.0, 1.0].
   2. Multi-Signal Fusion:
      - Unified Novelty Score: S_unified(x) = sum(w_i * Z_i(x)) over the 4 signals.
+       Optimized fusion weights: w = [0.40 Energy, 0.30 Mahalanobis, 0.15 Leaf, 0.15 Relative].
   3. Operational Percentile Thresholding (tau):
      - tau = np.percentile(S_val, 95.0) calibrated strictly on validation known traffic.
   4. The Rejection Decision:
@@ -71,9 +74,9 @@ class EmpiricalCDFNormalizer:
     Z_i(s) = F_i(s) = P(S_known <= s) via np.searchsorted.
     """
     def __init__(self):
-        self.signal_names = ["signal_confidence", "signal_mahalanobis", "signal_leaf", "signal_relative"]
+        self.signal_names = ["signal_energy", "signal_mahalanobis", "signal_leaf", "signal_relative"]
         self.short_keys = {
-            "signal_confidence": "Z_confidence",
+            "signal_energy": "Z_energy",
             "signal_mahalanobis": "Z_mahalanobis",
             "signal_leaf": "Z_leaf",
             "signal_relative": "Z_relative"
@@ -178,23 +181,35 @@ def extract_leaf_profiles(df_train, booster, feats_a, known_classes, class_to_id
 # --------------------------------------------------------------------------------------
 # 4. Computation of the 4 Foundational Novelty Signals
 # --------------------------------------------------------------------------------------
-def compute_4_novelty_signals(df, clf, booster, mah_stats, leaf_profiles, feats_a, feats_b, idx_to_class, epsilon=1e-12):
+def compute_4_novelty_signals(df, clf, booster, mah_stats, leaf_profiles, feats_a, feats_b, idx_to_class, temperature=2.0, epsilon=1e-12):
     """
-    Computes the 4 foundational novelty signals:
-      1. S_C: Confidence Novelty (1 - P_max)
-      2. S_M: Mahalanobis Distance to predicted class centroid
-      3. S_L: Leaf-Space Novelty (1 - LeafSimilarity across all trees)
+    Computes the canonical 4 foundational novelty signals:
+      1. S_E: Free Energy Novelty Score (-T * log(sum(exp(f_k / T)))) from unnormalized logits
+      2. S_M: Log-Manifold Ledoit-Wolf Mahalanobis Distance to predicted centroid
+      3. S_L: Leaf-Space Traversal Novelty (1 - LeafSimilarity across all decision trees)
       4. S_R: Relative Distance Novelty (D_M(pred) / (min_{c != pred} D_M(c) + eps))
     """
     n_samples = len(df)
     num_classes = len(idx_to_class)
 
-    # 1. XGBoost Probabilities & Signal 1 (Confidence Novelty)
+    # 1. XGBoost Raw Booster Logits & Signal 1 (Free Energy Novelty)
     X_a = df[feats_a].values
-    prob = clf.predict_proba(X_a)
-    p_max = prob.max(axis=1)
-    pred_idx = np.argmax(prob, axis=1)
-    signal_confidence = 1.0 - p_max
+    dmat = xgb.DMatrix(X_a)
+    logits = booster.predict(dmat, output_margin=True)
+    if logits.ndim == 1:
+        logits = np.column_stack([-logits, logits])
+
+    # Class probabilities and predicted class index
+    exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+    probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+    pred_idx = np.argmax(probs, axis=1)
+
+    # Free Energy Novelty Score: E(x) = -T * log(sum(exp(f_k(x) / T)))
+    # Evaluated via numerically stable LogSumExp trick:
+    scaled_logits = logits / temperature
+    max_scaled = np.max(scaled_logits, axis=1, keepdims=True)
+    lse = max_scaled + np.log(np.sum(np.exp(scaled_logits - max_scaled), axis=1, keepdims=True) + epsilon)
+    signal_energy = (-temperature * lse).squeeze()
 
     # 2. Geometry Standardization (Representation B)
     means_b = mah_stats["means_b"]
@@ -226,7 +241,7 @@ def compute_4_novelty_signals(df, clf, booster, mah_stats, leaf_profiles, feats_
     signal_relative = signal_mahalanobis / (d_other + epsilon)
 
     # 4. Signal 3 (Leaf Novelty across 100 Trees)
-    leaves = booster.predict(xgb.DMatrix(X_a), pred_leaf=True).astype(np.int32)
+    leaves = booster.predict(dmat, pred_leaf=True).astype(np.int32)
     num_trees = leaves.shape[1]
 
     leaf_sim = np.zeros(n_samples, dtype=np.float64)
@@ -248,7 +263,7 @@ def compute_4_novelty_signals(df, clf, booster, mah_stats, leaf_profiles, feats_
 
     return pd.DataFrame({
         "pred_idx": pred_idx,
-        "signal_confidence": signal_confidence,
+        "signal_energy": signal_energy,
         "signal_mahalanobis": signal_mahalanobis,
         "signal_leaf": signal_leaf,
         "signal_relative": signal_relative
@@ -305,9 +320,10 @@ def run_live_rejection_demo(df_all, heldout_attack="Data_Exfiltration"):
 
     # Convert to Percentile Ranks Z_i in [0.0, 1.0]
     Z_val = normalizer.transform(val_sig)
-    sig_cols = ["Z_confidence", "Z_mahalanobis", "Z_leaf", "Z_relative"]
-    # Unified Score (Equal weights w = [0.25, 0.25, 0.25, 0.25])
-    s_val_unified = Z_val[sig_cols].mean(axis=1).values
+    sig_cols = ["Z_energy", "Z_mahalanobis", "Z_leaf", "Z_relative"]
+    # Multi-Signal Fusion Weights (Energy=0.40, Mahalanobis=0.30, Leaf=0.15, Relative=0.15)
+    weights = np.array([0.40, 0.30, 0.15, 0.15])
+    s_val_unified = Z_val[sig_cols].values @ weights
 
     # Calibrate Operating Threshold at 95.0th percentile of Known Validation Traffic
     tau = np.percentile(s_val_unified, 95.0)
@@ -317,11 +333,11 @@ def run_live_rejection_demo(df_all, heldout_attack="Data_Exfiltration"):
     print("5. Evaluating Open-Set Rejection Rule on Heldout Test Sets...")
     test_sig = compute_4_novelty_signals(test_df, clf, booster, mah_stats, leaf_profiles, FEATS_A, FEATS_B, idx_to_class)
     Z_test = normalizer.transform(test_sig)
-    s_test_unified = Z_test[sig_cols].mean(axis=1).values
+    s_test_unified = Z_test[sig_cols].values @ weights
 
     zd_sig = compute_4_novelty_signals(df_zd, clf, booster, mah_stats, leaf_profiles, FEATS_A, FEATS_B, idx_to_class)
     Z_zd = normalizer.transform(zd_sig)
-    s_zd_unified = Z_zd[sig_cols].mean(axis=1).values
+    s_zd_unified = Z_zd[sig_cols].values @ weights
 
     # REJECTION DECISION:
     # Score > tau  ==> REJECT as Zero-Day (1)

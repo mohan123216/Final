@@ -19,13 +19,13 @@ Because the probabilities are mathematically forced to sum to **1.0 (100%)**:
 
 ## 💡 The Canonical 4 Foundational Novelty Signals
 
-Rather than relying on softmax probabilities, our Tier 2 engine extracts **4 independent statistical, geometric, and structural novelty signals** from the network flow:
+Rather than relying on brittle softmax confidence, our Tier 2 engine extracts **4 independent statistical, geometric, and structural novelty signals** from the network flow:
 
 ```
 Incoming Network Flow (x)
        │
-       ├──► Signal 1: Confidence Novelty [S_C = 1.0 - P_max]
-       │              (Measures prediction uncertainty; eliminates 100%-sum fallacy)
+       ├──► Signal 1: Logit Free Energy Novelty [S_E = -T * log(sum(exp(f_k / T)))]
+       │              (Derived from unnormalized booster margins; eliminates Softmax 100%-sum fallacy)
        │
        ├──► Signal 2: Log-Manifold Mahalanobis Geometry [S_M = D_M(x, c_pred)]
        │              (Ledoit-Wolf regularized covariance distance in log-volume space)
@@ -44,6 +44,8 @@ Incoming Network Flow (x)
  ├─────────────────────────────────────────────────────────────┤
  │ 2. Multi-Signal Fusion:                                     │
  │    S_unified(x) = sum(w_i * Z_i(x))                         │
+ │    Weights: [0.40 Energy, 0.30 Mahalanobis, 0.15 Leaf,      │
+ │              0.15 Relative]                                 │
  ├─────────────────────────────────────────────────────────────┤
  │ 3. Operational Thresholding:                                │
  │    tau = np.percentile(S_val, 95.0) on Known Validation    │
@@ -63,9 +65,10 @@ Incoming Network Flow (x)
 
 ## 🔬 Mathematical Formulation of the 4 Signals
 
-1. **Signal 1: Confidence Novelty ($S_C$):**
-   $$S_C(x) = 1.0 - \max_k P(y=k \mid x)$$
-   For known classes, confidence is close to 1.0 ($S_C \approx 0$). For alien threats, output probabilities are diffuse ($S_C \approx 1$).
+1. **Signal 1: Logit Free Energy Novelty ($S_E$):**
+   $$S_E(x) = -T \cdot \log \left( \sum_{k=1}^K \exp \left( \frac{f_k(x)}{T} \right) \right)$$
+   - *Why Free Energy over Softmax Confidence ($1 - P_{\max}$)?* Softmax mathematically forces probabilities to sum to 1.0 ($\sum p_k = 1.0$). If an alien zero-day attack has arbitrary positive logits, softmax is forced to inflate one of them, creating an illusion of high certainty.
+   - Free Energy operates directly on the **unnormalized margin logits** $f_k(x)$ produced by the XGBoost trees (`output_margin=True`). Known classes produce high winning logits yielding large negative Free Energy ($E(x) \ll 0$). Out-of-distribution zero-day flows produce low, disordered logits yielding significantly **higher Free Energy** ($E(x) \gg 0$), exposing the novelty without being masked by softmax normalization. Temperature is set to $T = 2.0$.
 
 2. **Signal 2: Log-Manifold Ledoit-Wolf Mahalanobis Distance ($S_M$):**
    $$S_M(x) = \sqrt{(z - \mu_{\hat{y}})^T \Sigma_{\hat{y}}^{-1} (z - \mu_{\hat{y}})}$$
@@ -77,7 +80,7 @@ Incoming Network Flow (x)
 
 4. **Signal 4: Relative Neighborhood Distance Margin ($S_R$):**
    $$S_R(x) = \frac{D_M(x, \hat{y})}{\min_{c \neq \hat{y}} D_M(x, c) + \epsilon}$$
-   Evaluates boundary ambiguity when a sample falls between two known centroids.
+   Evaluates boundary ambiguity when a sample falls in the geometric void between two known centroids.
 
 ---
 
@@ -88,13 +91,16 @@ Raw signals have vastly different scales. To make them comparable without assumi
 $$Z_i(s) = F_i(s) = P(S_{\text{known}} \le s)$$
 Computed efficiently via `np.searchsorted` fitted strictly on known validation traffic.
 
-### Step B: Operational Threshold Calibration ($\tau$)
+### Step B: Multi-Signal Fusion
+$$S_{\text{unified}}(x) = 0.40 \cdot Z_{\text{energy}}(x) + 0.30 \cdot Z_{\text{mahalanobis}}(x) + 0.15 \cdot Z_{\text{leaf}}(x) + 0.15 \cdot Z_{\text{relative}}(x)$$
+
+### Step C: Operational Threshold Calibration ($\tau$)
 $$\tau = \text{percentile}(S_{\text{val}}, 95.0)$$
 Calibrating $\tau$ at the 95th percentile of known validation traffic guarantees that:
 - **~95% of known traffic is accepted**.
-- **Benign normal traffic specificity is maintained at >96-99%**.
+- **Benign normal traffic specificity is maintained at >97%** (minimal false alarms).
 
-### Step C: The Rejection Decision
+### Step D: The Rejection Decision
 $$\text{Decision}(x) = \begin{cases} \text{REJECT as Zero-Day Novel Threat} & \text{if } S_{\text{unified}}(x) > \tau \\ \text{ACCEPT as Known Traffic} & \text{if } S_{\text{unified}}(x) \le \tau \end{cases}$$
 
 ---
@@ -109,4 +115,4 @@ python 03_run_zero_day_engine.py
 ---
 
 ## 🎤 How to Explain Step 3 in a Presentation / Viva
-> *"In Step 3, we solved the open-set zero-day rejection problem. Standard classifiers fail because the softmax layer forces probabilities to sum to 100%, causing novel attacks to be misclassified as known ones with high confidence. Our Tier-2 engine uses 4 complementary signals: Confidence Novelty, Ledoit-Wolf regularized Mahalanobis Distance, Tree Leaf-Space Traversal Novelty, and Relative Margin Ratio. We calibrate these signals into percentile ranks using an Empirical CDF normalizer fitted on validation traffic, and set an operational threshold at the 95th percentile. If the unified score exceeds the threshold, the flow is rejected as a zero-day attack; otherwise, it is accepted as known traffic."*
+> *"In Step 3, we solved the open-set zero-day rejection problem. Standard classifiers fail because the softmax layer forces probabilities to sum to 100%, causing novel attacks to be misclassified as known ones with high confidence. Our Tier-2 engine resolves this using 4 complementary signals: Logit Free Energy Novelty (operating on raw booster margin logits to eliminate the softmax illusion), Log-Manifold Ledoit-Wolf Mahalanobis Distance, Tree Leaf-Space Traversal Novelty, and Relative Margin Ratio. We calibrate these signals into percentile ranks using an Empirical CDF normalizer fitted on validation traffic, and set an operational threshold at the 95th percentile. If the unified score exceeds the threshold, the flow is rejected as a zero-day attack; otherwise, it is accepted as known traffic."*

@@ -30,8 +30,10 @@ Our solution is a **Two-Tier Hybrid Open-Set Multi-Signal Architecture**:
             ┌──────────────────────────────────────────────────────────────────┐
             │ TIER 2: 4-SIGNAL OPEN-SET ZERO-DAY REJECTION ENGINE              │
             │                                                                  │
-            │  Signal 1: Confidence Novelty (S_C = 1.0 - P_max)                │
-            │            (Measures prediction uncertainty & model entropy)     │
+            │  Signal 1: Logit Free Energy Novelty (S_E)                       │
+            │            E(x) = -T * log(sum(exp(f_k(x) / T)))                 │
+            │            (Operates on unnormalized booster logits to eliminate │
+            │             the Softmax 100%-sum overconfidence fallacy)         │
             │                                                                  │
             │  Signal 2: Log-Manifold Regularized Mahalanobis Distance (S_M)   │
             │            D_M(x) = sqrt((z - μ_c)^T * Σ_c^-1 * (z - μ_c))        │
@@ -148,7 +150,7 @@ When explaining your project to an evaluator, professor, or examiner, follow thi
 ### Step 3: Tier 2 - 4-Signal Open-Set Zero-Day Rejection Engine
 - **The Problem:** Standard classifiers suffer from the **Softmax 100%-Sum Fallacy**. When an unobserved zero-day attack appears, softmax forces the output probabilities to sum to 100%, causing the model to misclassify the alien attack as a known one with high false confidence. Baselines achieve only 33% recall.
 - **Our Solution:** We decoupled novelty detection from classification using **4 foundational novelty signals**:
-  1. *Confidence Novelty* ($S_C = 1.0 - P_{\max}$, measures prediction uncertainty).
+  1. *Logit Free Energy Novelty* ($S_E = -T \cdot \log \sum \exp(f_k / T)$, operates on raw unnormalized logits).
   2. *Log-Manifold Mahalanobis Geometry* ($S_M = D_M$, Ledoit-Wolf regularized covariance distance).
   3. *Tree Leaf-Space Traversal Novelty* ($S_L = 1.0 - \text{LeafSim}$, tracks path novelty across 100 decision trees).
   4. *Relative Neighborhood Margin Ratio* ($S_R = D_M / D_{\text{other}}$, measures boundary ambiguity).
