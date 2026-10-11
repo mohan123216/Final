@@ -46,7 +46,7 @@ def run_demo():
     if os.path.exists(src_dist):
         shutil.copy(src_dist, os.path.join(OUTPUT_DIR, "class_distribution_full_74files.csv"))
 
-    for p in ["class_imbalance_before_and_after.png", "streaming_stratified_sampling_pipeline.png"]:
+    for p in ["section1_data_processing_dashboard.png", "class_imbalance_before_and_after.png", "streaming_stratified_sampling_pipeline.png"]:
         src_p = os.path.join(PLOTS_DIR, p)
         if os.path.exists(src_p):
             shutil.copy(src_p, os.path.join(OUTPUT_DIR, p))
@@ -54,6 +54,7 @@ def run_demo():
     print("\n" + "=" * 80, flush=True)
     print("LIVE ARTIFACTS GENERATED IN:", flush=True)
     print(f"  Folder: {OUTPUT_DIR}", flush=True)
+    print("  - section1_data_processing_dashboard.png     (Ingestion & Feature Engineering Dashboard)", flush=True)
     print("  - class_distribution_full_74files.csv        (Full 73.3M raw vs sample audit)", flush=True)
     print("  - class_imbalance_before_and_after.png       (Publication Imbalance plot)", flush=True)
     print("  - streaming_stratified_sampling_pipeline.png (Pipeline architecture diagram)", flush=True)
