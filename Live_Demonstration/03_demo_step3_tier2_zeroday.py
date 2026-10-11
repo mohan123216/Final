@@ -41,15 +41,26 @@ def run_demo():
     if proc.returncode != 0:
         sys.exit(proc.returncode)
 
-    # Sync generated artifacts
-    for item in [
+    # 2. Run PNG generator for Perimeter vs Novelty & Transition Matrix tables
+    png_script = os.path.join(STEP3_DIR, "generate_comparison_and_transition_pngs.py")
+    if os.path.exists(png_script):
+        subprocess.run([sys.executable, png_script], cwd=CURRENT_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # Sync generated artifacts to Live_Demonstration/outputs/step3_tier2_zeroday/
+    artifacts_to_sync = [
         (os.path.join(RESULTS_DIR, "zero_day_detection_standard_metrics.csv"), "zero_day_detection_standard_metrics.csv"),
         (os.path.join(RESULTS_DIR, "zero_day_standard_metrics_table_and_chart.png"), "zero_day_standard_metrics_table_and_chart.png"),
-        (os.path.join(RESULTS_DIR, "tier2_sample_test_inputs_rejection_trace.csv"), "tier2_sample_test_inputs_rejection_trace.csv")
-    ]:
-        src_path, dst_name = item
-        if os.path.exists(src_path):
-            shutil.copy(src_path, os.path.join(OUTPUT_DIR, dst_name))
+        (os.path.join(RESULTS_DIR, "tier2_sample_test_inputs_rejection_trace.csv"), "tier2_sample_test_inputs_rejection_trace.csv"),
+        (os.path.join(RESULTS_DIR, "comparison_perimeter_vs_novelty_metrics.png"), "comparison_perimeter_vs_novelty_metrics.png"),
+        (os.path.join(RESULTS_DIR, "detailed_class_transition_matrix.png"), "detailed_class_transition_matrix.png"),
+        (os.path.join(RESULTS_DIR, "all_10_attacks_leave_one_out_classification_trace.csv"), "all_10_attacks_leave_one_out_classification_trace.csv"),
+        (os.path.join(RESULTS_DIR, "all_10_attacks_leave_one_out_classification_trace.html"), "all_10_attacks_leave_one_out_classification_trace.html"),
+        (os.path.join(RESULTS_DIR, "all_tested_flows_full_evaluation_with_color_tags.csv"), "all_tested_flows_full_evaluation_with_color_tags.csv"),
+    ]
+    for src_path, dst_name in artifacts_to_sync:
+        dst_path = os.path.join(OUTPUT_DIR, dst_name)
+        if os.path.exists(src_path) and not os.path.exists(dst_path):
+            shutil.copy2(src_path, dst_path)
 
     # Print Sample Test Inputs Rejection Trace
     trace_path = os.path.join(OUTPUT_DIR, "tier2_sample_test_inputs_rejection_trace.csv")
@@ -78,6 +89,10 @@ def run_demo():
     print("  - zero_day_detection_standard_metrics.csv       (Rejection benchmarks for all 10 attacks)", flush=True)
     print("  - zero_day_standard_metrics_table_and_chart.png (Official table & bar chart)", flush=True)
     print("  - tier2_sample_test_inputs_rejection_trace.csv  (Per-sample 4-signal decision trace)", flush=True)
+    print("  - comparison_perimeter_vs_novelty_metrics.png   (Perimeter vs. Novelty comparison table)", flush=True)
+    print("  - detailed_class_transition_matrix.png          (Granular per-model transition matrix)", flush=True)
+    print("  - all_10_attacks_leave_one_out_classification_trace.html (Interactive LOAO dashboard)", flush=True)
+    print("  - all_tested_flows_full_evaluation_with_color_tags.csv   (Full 56,450 flows with Green/Red tags)", flush=True)
     print(f"Execution finished in {time.time() - t0:.2f} seconds.", flush=True)
     print(">>> STEP 3 COMPLETED WITH ZERO ERRORS! <<<", flush=True)
     print("=" * 80, flush=True)
