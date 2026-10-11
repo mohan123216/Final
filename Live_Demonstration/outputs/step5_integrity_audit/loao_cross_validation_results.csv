@@ -1,0 +1,5 @@
+HeldOut_Category,HeldOut_Subcategory,ZeroDay_Rejection_Recall,Known_Traffic_Acceptance,Operational_Threshold
+Theft,Data_Exfiltration,13.56,95.15,-4.1106
+Theft,Keylogging,90.33,95.1,-4.3399
+DoS,HTTP,12.99,95.25,-4.9933
+Reconnaissance,OS_Fingerprint,9.69,95.0,-4.5598

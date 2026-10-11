@@ -1,0 +1,12 @@
+{
+  "operational_threshold_tau": 0.7654,
+  "known_acceptance_rate": 95.12,
+  "false_alarm_rate": 4.88,
+  "zeroday_rejection_rate": 29.93,
+  "weights": {
+    "energy": 0.4,
+    "mahalanobis": 0.3,
+    "leaf": 0.15,
+    "margin": 0.15
+  }
+}

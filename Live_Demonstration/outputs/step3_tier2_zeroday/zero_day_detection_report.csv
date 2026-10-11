@@ -1,0 +1,7 @@
+Metric,Value
+Operational Threshold (tau),0.7654
+Known Traffic Acceptance Rate,95.12%
+Known False Alarm Rate,4.88%
+Zero-Day Threat Rejection Rate,29.93%
+Total Known Test Flows,8932
+Total Alien Zero-Day Flows,1587

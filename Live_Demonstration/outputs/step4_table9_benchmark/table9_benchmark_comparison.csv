@@ -1,0 +1,11 @@
+Category,Attack_Subclass,Base_Paper_F1,Proposed_HOMZ_F1,F1_Delta_Pct,Base_Paper_Acc,Proposed_HOMZ_Acc,Acc_Delta_Pct,Base_Paper_Error,Proposed_HOMZ_Error,Error_Reduction_Pct
+DoS,HTTP,0.91,0.999,8.9,0.94,0.999,5.9,0.06,0.001,5.9
+DoS,TCP,0.82,0.999,17.9,0.86,0.999,13.9,0.14,0.001,13.9
+DoS,UDP,0.92,1.0,8.0,0.94,1.0,6.0,0.06,0.0,6.0
+DDoS,HTTP,0.96,0.998,3.8,0.97,0.999,2.9,0.03,0.001,2.9
+DDoS,TCP,0.86,0.999,13.9,0.89,0.999,10.9,0.11,0.001,10.9
+DDoS,UDP,0.94,1.0,6.0,0.96,1.0,4.0,0.04,0.0,4.0
+Reconnaissance,OS_Fingerprint,0.94,0.972,3.2,0.95,0.972,2.2,0.05,0.028,2.2
+Reconnaissance,Service_Scan,0.89,0.971,8.1,0.92,0.971,5.1,0.08,0.029,5.1
+Theft,Keylogging,0.88,0.985,10.5,0.98,0.985,0.5,0.02,0.015,0.5
+Theft,Data_Exfiltration,0.15,0.936,78.6,0.93,0.989,5.9,0.07,0.011,5.9
