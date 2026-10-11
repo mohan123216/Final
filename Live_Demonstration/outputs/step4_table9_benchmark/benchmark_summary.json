@@ -1,8 +1,0 @@
-{
-  "base_paper_mean_f1": 0.827,
-  "proposed_homz_mean_f1": 0.9859,
-  "macro_f1_improvement_pct": 15.89,
-  "base_paper_mean_accuracy": 0.934,
-  "proposed_homz_mean_accuracy": 0.9913,
-  "data_exfiltration_f1_jump": "From 0.15 (Base Paper) to 0.9362 (HOMZ Engine)"
-}

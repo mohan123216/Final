@@ -10,7 +10,6 @@ from a completely clean, empty directory and generate outputs live step-by-step.
 
 import os
 import shutil
-import sys
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUTS_DIR = os.path.join(CURRENT_DIR, "outputs")
@@ -28,7 +27,7 @@ def clean_outputs():
     print("=" * 80)
     print(">>> LIVE DEMONSTRATION: RESETTING OUTPUT DIRECTORIES <<<")
     print("=" * 80)
-    
+
     if os.path.exists(OUTPUTS_DIR):
         print(f"Purging existing outputs in: {OUTPUTS_DIR}...")
         try:

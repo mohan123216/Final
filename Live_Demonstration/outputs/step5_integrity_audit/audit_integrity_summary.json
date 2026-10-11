@@ -1,7 +1,0 @@
-{
-  "audit_passed": true,
-  "overlapping_samples": 0,
-  "forbidden_columns_found": 0,
-  "loao_mean_zeroday_rejection": 31.64,
-  "known_traffic_acceptance": ">= 95.0%"
-}
