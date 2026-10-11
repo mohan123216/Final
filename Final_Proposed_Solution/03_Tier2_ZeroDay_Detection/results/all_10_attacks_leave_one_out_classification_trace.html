@@ -1,0 +1,3662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All 10 Classes Leave-One-Out Classification Trace</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 24px;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 24px 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+        .header h1 { margin: 0 0 8px 0; font-size: 24px; }
+        .header p { margin: 0; color: #94a3b8; font-size: 14px; }
+
+        .kpi-container {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            flex: 1;
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .kpi-card h4 { margin: 0 0 6px 0; font-size: 12px; text-transform: uppercase; color: #64748b; }
+        .kpi-card .val { font-size: 26px; font-weight: bold; }
+        .text-green { color: #16a34a; }
+        .text-red { color: #dc2626; }
+        .text-blue { color: #2563eb; }
+
+        .controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: white;
+            padding: 14px 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 16px;
+        }
+        .btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #f1f5f9; }
+        .btn.active { background: #0f172a; color: white; border-color: #0f172a; }
+        select, input {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 13px;
+            outline: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            font-size: 12.5px;
+        }
+        th {
+            background: #f1f5f9;
+            color: #334155;
+            text-align: left;
+            padding: 12px 14px;
+            font-weight: 600;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* COLOR ROW STYLING REQUESTED BY USER */
+        .row-green {
+            background-color: #f0fdf4 !important;
+            border-left: 5px solid #22c55e !important;
+        }
+        .row-green:hover { background-color: #dcfce7 !important; }
+        .row-red {
+            background-color: #fef2f2 !important;
+            border-left: 5px solid #ef4444 !important;
+        }
+        .row-red:hover { background-color: #fee2e2 !important; }
+
+        .badge-green {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .badge-red {
+            display: inline-block;
+            background: #ef4444;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .pill-heldout {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>All 10 Classes Leave-One-Out Classification Trace</h1>
+        <p>Interactive verification dashboard showing input network features, Tier-2 novelty signals, and GREEN / RED classification verdicts across all 10 held-out zero-day attack scenarios.</p>
+    </div>
+
+    <div class="kpi-container">
+        <div class="kpi-card">
+            <h4>Total Evaluated Flows</h4>
+            <div class="val text-blue">156</div>
+        </div>
+        <div class="kpi-card">
+            <h4>Correctly Classified (Green Rows)</h4>
+            <div class="val text-green">116 (74.4%)</div>
+        </div>
+        <div class="kpi-card">
+            <h4>Misclassified (Red Rows)</h4>
+            <div class="val text-red">40 (25.6%)</div>
+        </div>
+        <div class="kpi-card">
+            <h4>Threshold Strategy</h4>
+            <div class="val" style="font-size: 18px; padding-top: 4px; color: #475569;">95th Percentile CDF (τ ≈ 0.76 - 0.84)</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <strong>Filter Verdict:</strong>
+        <button class="btn active" onclick="filterColor('ALL', this)">Show All (156)</button>
+        <button class="btn" onclick="filterColor('GREEN', this)" style="color: #16a34a;">Correct Only (116)</button>
+        <button class="btn" onclick="filterColor('RED', this)" style="color: #dc2626;">Errors Only (40)</button>
+
+        <strong style="margin-left: 20px;">Held-Out Class:</strong>
+        <select id="heldoutSelect" onchange="applyFilters()">
+            <option value="ALL">All 10 Attack Classes</option>
+            <option value="DDoS - HTTP">DDoS - HTTP</option><option value="DDoS - TCP">DDoS - TCP</option><option value="DDoS - UDP">DDoS - UDP</option><option value="DoS - HTTP">DoS - HTTP</option><option value="DoS - TCP">DoS - TCP</option><option value="DoS - UDP">DoS - UDP</option><option value="Reconnaissance - OS_Fingerprint">Reconnaissance - OS_Fingerprint</option><option value="Reconnaissance - Service_Scan">Reconnaissance - Service_Scan</option><option value="Theft - Data_Exfiltration">Theft - Data_Exfiltration</option><option value="Theft - Keylogging">Theft - Keylogging</option>
+        </select>
+
+        <input type="text" id="searchInput" placeholder="Search flows, ports, IP..." onkeyup="applyFilters()" style="margin-left: auto; width: 220px;">
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sample ID</th>
+                <th>Held-Out Attack</th>
+                <th>True Class</th>
+                <th>Traffic Type</th>
+                <th>Proto & Port</th>
+                <th>Flow Telemetry</th>
+                <th>4 Calibrated Signals (Z)</th>
+                <th>Novelty Score</th>
+                <th>Engine Decision</th>
+                <th>Verdict</th>
+            </tr>
+        </thead>
+        <tbody id="traceTableBody">
+            
+        <tr class="row-red" data-heldout="DoS - HTTP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0001</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>DoS</strong> / HTTP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">32.7181s | 10 pkts | 1577 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.17 | M:0.39<br>
+                L:0.22 | R:0.23
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2520 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - HTTP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0002</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>DoS</strong> / HTTP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">32.8977s | 10 pkts | 1534 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.22 | M:0.42<br>
+                L:0.17 | R:0.27
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2795 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - HTTP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0003</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>DoS</strong> / HTTP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">55.2458s | 10 pkts | 1570 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.19 | M:0.75<br>
+                L:0.57 | R:0.61
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4786 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - HTTP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0004</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.97 | M:0.97<br>
+                L:0.96 | R:0.96
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9676 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0005</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.23 | M:0.91<br>
+                L:0.90 | R:0.12
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5157 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0006</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.46<br>
+                L:0.81 | R:0.04
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2908 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0007</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.47<br>
+                L:0.81 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2959 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0008</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.10 | M:0.88<br>
+                L:1.00 | R:0.42
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5150 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0009</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.45<br>
+                L:0.81 | R:0.04
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2902 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0010</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.02 | M:0.86<br>
+                L:0.92 | R:0.16
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4284 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0011</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.43<br>
+                L:0.81 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2813 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0012</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.48<br>
+                L:0.82 | R:0.01
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3004 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0013</td>
+            <td><span class="pill-heldout">DoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.15 | M:0.71<br>
+                L:0.82 | R:0.27
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4374 <span style="font-size: 11px; color: #64748b;">(τ=0.8258)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - TCP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0014</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>DoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">40.017s | 6 pkts | 924 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.20 | M:0.69<br>
+                L:0.03 | R:0.40
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3508 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - TCP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0015</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>DoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">41.3603s | 7 pkts | 1078 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.18 | M:0.76<br>
+                L:0.03 | R:0.51
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3793 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - TCP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0016</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>DoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">25.0393s | 6 pkts | 548 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.01 | M:1.00<br>
+                L:0.79 | R:0.91
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5563 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0017</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>DoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">0.1335s | 3 pkts | 274 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.99 | M:1.00<br>
+                L:0.80 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9639 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - TCP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0018</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.75 | M:0.96<br>
+                L:0.97 | R:0.97
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8793 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0019</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.14 | M:0.89<br>
+                L:0.93 | R:0.12
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4799 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0020</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.47<br>
+                L:0.78 | R:0.08
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2970 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0021</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.48<br>
+                L:0.78 | R:0.09
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3015 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0022</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.03 | M:0.87<br>
+                L:1.00 | R:0.38
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4776 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0023</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.46<br>
+                L:0.78 | R:0.08
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2958 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0024</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.02 | M:0.85<br>
+                L:0.92 | R:0.20
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4305 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0025</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.03 | M:0.45<br>
+                L:0.80 | R:0.06
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2743 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0026</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.49<br>
+                L:0.81 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3047 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0027</td>
+            <td><span class="pill-heldout">DoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.11 | M:0.70<br>
+                L:0.82 | R:0.25
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4161 <span style="font-size: 11px; color: #64748b;">(τ=0.8397)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - UDP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0028</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>DoS</strong> / UDP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">UDP (80)</td>
+            <td style="font-family: monospace;">25.4881s | 22 pkts | 1320 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:1.00 | M:0.57<br>
+                L:0.89 | R:0.38
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.7592 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - UDP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0029</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>DoS</strong> / UDP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">UDP (80)</td>
+            <td style="font-family: monospace;">27.2474s | 8 pkts | 480 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.17 | M:0.20<br>
+                L:0.00 | R:0.35
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.1828 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - UDP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0030</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>DoS</strong> / UDP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">UDP (80)</td>
+            <td style="font-family: monospace;">22.2497s | 8 pkts | 480 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.16 | M:0.14<br>
+                L:0.00 | R:0.32
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.1509 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DoS - UDP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0031</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.80 | M:0.98<br>
+                L:0.99 | R:0.99
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9120 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0032</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.06 | M:0.89<br>
+                L:0.92 | R:0.15
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4517 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0033</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.22 | M:0.41<br>
+                L:0.76 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3298 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0034</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.22 | M:0.42<br>
+                L:0.76 | R:0.04
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3352 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0035</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.02 | M:0.87<br>
+                L:0.98 | R:0.54
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4976 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0036</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.22 | M:0.41<br>
+                L:0.76 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3289 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0037</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.16 | M:0.85<br>
+                L:0.91 | R:0.23
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4930 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0038</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.18 | M:0.39<br>
+                L:0.80 | R:0.01
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3073 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0039</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.23 | M:0.45<br>
+                L:0.80 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3527 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0040</td>
+            <td><span class="pill-heldout">DoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.10 | M:0.68<br>
+                L:0.80 | R:0.27
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4068 <span style="font-size: 11px; color: #64748b;">(τ=0.8288)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - HTTP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0041</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>DDoS</strong> / HTTP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">125.3307s | 10 pkts | 2231 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.21 | M:0.78<br>
+                L:0.75 | R:0.53
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5093 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - HTTP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0042</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>DDoS</strong> / HTTP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">13.9963s | 10 pkts | 1755 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.24 | M:0.48<br>
+                L:0.19 | R:0.34
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3191 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - HTTP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0043</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>DDoS</strong> / HTTP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">19.6338s | 10 pkts | 1720 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.24 | M:0.31<br>
+                L:0.08 | R:0.17
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2250 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0044</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>DDoS</strong> / HTTP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (46672)</td>
+            <td style="font-family: monospace;">70.0411s | 3 pkts | 198 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.99 | M:0.98<br>
+                L:0.94 | R:0.90
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9688 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - HTTP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0045</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.77 | M:0.99<br>
+                L:0.97 | R:0.99
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8974 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0046</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.21 | M:0.92<br>
+                L:0.91 | R:0.12
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5128 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0047</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.44<br>
+                L:0.80 | R:0.04
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2844 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0048</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.45<br>
+                L:0.80 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2898 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0049</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.90<br>
+                L:1.00 | R:0.45
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5178 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0050</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.44<br>
+                L:0.80 | R:0.03
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2828 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0051</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.02 | M:0.89<br>
+                L:0.92 | R:0.18
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4377 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0052</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.07 | M:0.42<br>
+                L:0.80 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2758 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0053</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.47<br>
+                L:0.81 | R:0.01
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2992 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - HTTP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0054</td>
+            <td><span class="pill-heldout">DDoS - HTTP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.14 | M:0.71<br>
+                L:0.82 | R:0.28
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4353 <span style="font-size: 11px; color: #64748b;">(τ=0.8067)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - TCP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0055</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">22.7112s | 7 pkts | 890 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.98 | M:0.88<br>
+                L:0.04 | R:0.62
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.7542 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - TCP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0056</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">11.055s | 4 pkts | 616 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.98 | M:0.84<br>
+                L:0.24 | R:0.67
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.7811 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - TCP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0057</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">0.0s | 1 pkts | 154 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.19 | M:0.95<br>
+                L:0.74 | R:0.85
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.6021 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0058</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">3.8258s | 2 pkts | 308 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:1.00 | M:0.87<br>
+                L:0.63 | R:0.74
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8673 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0059</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">11.6589s | 7 pkts | 702 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:1.00 | M:0.97<br>
+                L:0.59 | R:0.94
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9186 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0060</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">2.5615s | 2 pkts | 308 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:1.00 | M:0.86<br>
+                L:0.88 | R:0.55
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8741 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0061</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (7609)</td>
+            <td style="font-family: monospace;">24.07s | 8 pkts | 856 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.97 | M:0.91<br>
+                L:0.84 | R:0.75
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8997 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0062</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">23.175s | 7 pkts | 890 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.96 | M:0.98<br>
+                L:0.04 | R:0.91
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8227 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0063</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">18.6104s | 8 pkts | 856 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:1.00 | M:0.98<br>
+                L:0.52 | R:0.95
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9140 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0064</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">3.7226s | 3 pkts | 368 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:1.00 | M:0.98<br>
+                L:0.88 | R:0.93
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9665 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0065</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>DDoS</strong> / TCP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.9263s | 8 pkts | 856 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:1.00 | M:0.98<br>
+                L:0.57 | R:0.94
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9213 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - TCP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0066</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.66 | M:0.98<br>
+                L:0.98 | R:0.99
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8577 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0067</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.15 | M:0.91<br>
+                L:0.90 | R:0.12
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4872 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0068</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.43<br>
+                L:0.78 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2863 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0069</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.44<br>
+                L:0.78 | R:0.06
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2905 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0070</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.03 | M:0.88<br>
+                L:0.99 | R:0.47
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4945 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0071</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.06 | M:0.43<br>
+                L:0.75 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2737 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0072</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.03 | M:0.86<br>
+                L:0.91 | R:0.22
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4395 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0073</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.04 | M:0.41<br>
+                L:0.79 | R:0.03
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2618 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0074</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.46<br>
+                L:0.80 | R:0.01
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2974 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - TCP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0075</td>
+            <td><span class="pill-heldout">DDoS - TCP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.14 | M:0.71<br>
+                L:0.80 | R:0.27
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4316 <span style="font-size: 11px; color: #64748b;">(τ=0.8113)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - UDP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0076</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>DDoS</strong> / UDP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">UDP (80)</td>
+            <td style="font-family: monospace;">32.5877s | 12 pkts | 720 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.14 | M:0.35<br>
+                L:0.07 | R:0.47
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2397 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - UDP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0077</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>DDoS</strong> / UDP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">UDP (80)</td>
+            <td style="font-family: monospace;">14.1659s | 12 pkts | 720 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.76<br>
+                L:0.08 | R:0.90
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4075 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - UDP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0078</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>DDoS</strong> / UDP</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">UDP (80)</td>
+            <td style="font-family: monospace;">4.37s | 4 pkts | 240 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.01 | M:0.88<br>
+                L:0.17 | R:0.95
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4372 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="DDoS - UDP" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0079</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.85 | M:0.99<br>
+                L:0.99 | R:0.99
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9338 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0080</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.01 | M:0.92<br>
+                L:0.94 | R:0.15
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4435 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0081</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.26 | M:0.44<br>
+                L:0.80 | R:0.03
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3626 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0082</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.26 | M:0.46<br>
+                L:0.80 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3683 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0083</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.01 | M:0.90<br>
+                L:0.98 | R:0.56
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5056 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0084</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.26 | M:0.44<br>
+                L:0.80 | R:0.03
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3613 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0085</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.22 | M:0.88<br>
+                L:0.93 | R:0.23
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5253 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0086</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.22 | M:0.42<br>
+                L:0.82 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3402 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0087</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.27 | M:0.47<br>
+                L:0.83 | R:0.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3720 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="DDoS - UDP" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0088</td>
+            <td><span class="pill-heldout">DDoS - UDP</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.19 | M:0.71<br>
+                L:0.83 | R:0.28
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4566 <span style="font-size: 11px; color: #64748b;">(τ=0.8372)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Reconnaissance - OS_Fingerprint" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0089</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Reconnaissance</strong> / OS_Fingerprint</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (800)</td>
+            <td style="font-family: monospace;">0.0007s | 2 pkts | 120 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.21 | M:0.21<br>
+                L:0.48 | R:0.31
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2639 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Reconnaissance - OS_Fingerprint" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0090</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Reconnaissance</strong> / OS_Fingerprint</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (3300)</td>
+            <td style="font-family: monospace;">0.0008s | 2 pkts | 120 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.23 | M:0.16<br>
+                L:0.45 | R:0.29
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2525 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Reconnaissance - OS_Fingerprint" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0091</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Reconnaissance</strong> / OS_Fingerprint</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (12317)</td>
+            <td style="font-family: monospace;">0.0s | 2 pkts | 120 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.24 | M:0.82<br>
+                L:0.61 | R:0.39
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4919 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0092</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Reconnaissance</strong> / OS_Fingerprint</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (49152)</td>
+            <td style="font-family: monospace;">0.0006s | 9 pkts | 802 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.59 | M:0.98<br>
+                L:0.98 | R:0.97
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8234 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0093</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Reconnaissance</strong> / OS_Fingerprint</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">ICMP (3983)</td>
+            <td style="font-family: monospace;">0.0002s | 2 pkts | 384 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.73 | M:1.00<br>
+                L:0.99 | R:0.96
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8860 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Reconnaissance - OS_Fingerprint" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0094</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.99 | M:0.99<br>
+                L:0.95 | R:0.99
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9833 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0095</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.11 | M:0.90<br>
+                L:0.92 | R:0.18
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4791 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0096</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.38<br>
+                L:0.78 | R:0.12
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2855 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0097</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.39<br>
+                L:0.78 | R:0.12
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2894 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0098</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.36 | M:0.88<br>
+                L:0.99 | R:0.36
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.6108 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0099</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.38<br>
+                L:0.78 | R:0.11
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2848 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0100</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.04 | M:0.85<br>
+                L:0.90 | R:0.23
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4427 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0101</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.36<br>
+                L:0.78 | R:0.09
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2756 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0102</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.10 | M:0.40<br>
+                L:0.81 | R:0.07
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2907 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - OS_Fingerprint" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0103</td>
+            <td><span class="pill-heldout">Reconnaissance - OS_Fingerprint</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.18 | M:0.66<br>
+                L:0.80 | R:0.26
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4292 <span style="font-size: 11px; color: #64748b;">(τ=0.8102)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Reconnaissance - Service_Scan" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0104</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Reconnaissance</strong> / Service_Scan</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (31416)</td>
+            <td style="font-family: monospace;">0.0388s | 2 pkts | 120 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.02 | M:0.80<br>
+                L:0.71 | R:0.51
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4326 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Reconnaissance - Service_Scan" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0105</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Reconnaissance</strong> / Service_Scan</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (8544)</td>
+            <td style="font-family: monospace;">0.0001s | 2 pkts | 120 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.39 | M:0.21<br>
+                L:0.15 | R:0.43
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3035 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Reconnaissance - Service_Scan" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0106</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Reconnaissance</strong> / Service_Scan</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (34659)</td>
+            <td style="font-family: monospace;">0.0453s | 2 pkts | 120 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.02 | M:0.83<br>
+                L:0.71 | R:0.53
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4443 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0107</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Reconnaissance</strong> / Service_Scan</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">88.4543s | 18 pkts | 3230 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.86 | M:1.00<br>
+                L:0.83 | R:0.98
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9143 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0108</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Reconnaissance</strong> / Service_Scan</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (110)</td>
+            <td style="font-family: monospace;">0.3036s | 15 pkts | 2163 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.78 | M:0.99<br>
+                L:0.99 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9069 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0109</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Reconnaissance</strong> / Service_Scan</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">0.0004s | 9 pkts | 1615 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.98 | M:0.97<br>
+                L:0.88 | R:0.98
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9629 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Reconnaissance - Service_Scan" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0110</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:1.00 | M:0.99<br>
+                L:0.98 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9909 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0111</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.11 | M:0.91<br>
+                L:0.91 | R:0.06
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4658 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0112</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.40<br>
+                L:0.80 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2840 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0113</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.40<br>
+                L:0.80 | R:0.06
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2879 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0114</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.06 | M:0.89<br>
+                L:0.99 | R:0.31
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4856 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0115</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.39<br>
+                L:0.80 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2833 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0116</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.05 | M:0.86<br>
+                L:0.93 | R:0.14
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4391 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0117</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.06 | M:0.37<br>
+                L:0.80 | R:0.03
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2605 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0118</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.10 | M:0.42<br>
+                L:0.83 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2949 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Reconnaissance - Service_Scan" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0119</td>
+            <td><span class="pill-heldout">Reconnaissance - Service_Scan</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.17 | M:0.68<br>
+                L:0.81 | R:0.19
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4206 <span style="font-size: 11px; color: #64748b;">(τ=0.8243)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Theft - Keylogging" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0120</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (4433)</td>
+            <td style="font-family: monospace;">0.0002s | 2 pkts | 134 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.75 | M:0.71<br>
+                L:0.68 | R:0.74
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.7236 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Theft - Keylogging" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0121</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (4433)</td>
+            <td style="font-family: monospace;">0.0001s | 2 pkts | 134 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.69 | M:0.72<br>
+                L:0.70 | R:0.75
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.7082 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Theft - Keylogging" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0122</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (4433)</td>
+            <td style="font-family: monospace;">0.0002s | 2 pkts | 134 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.75 | M:0.70<br>
+                L:0.68 | R:0.73
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.7205 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0123</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (445)</td>
+            <td style="font-family: monospace;">0.0181s | 10 pkts | 4875 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.63 | M:1.00<br>
+                L:0.95 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8411 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0124</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (445)</td>
+            <td style="font-family: monospace;">0.0172s | 10 pkts | 4875 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.62 | M:1.00<br>
+                L:0.95 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8386 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0125</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (445)</td>
+            <td style="font-family: monospace;">0.0191s | 10 pkts | 4875 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.68 | M:1.00<br>
+                L:0.95 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8624 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0126</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (445)</td>
+            <td style="font-family: monospace;">0.0395s | 10 pkts | 4875 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.70 | M:1.00<br>
+                L:0.96 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8737 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0127</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (445)</td>
+            <td style="font-family: monospace;">0.0461s | 10 pkts | 4875 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.70 | M:1.00<br>
+                L:0.96 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8737 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0128</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Theft</strong> / Keylogging</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (445)</td>
+            <td style="font-family: monospace;">0.0385s | 10 pkts | 4875 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.75 | M:1.00<br>
+                L:0.96 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8922 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Theft - Keylogging" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0129</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.80 | M:0.98<br>
+                L:0.97 | R:1.00
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9089 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0130</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.15 | M:0.88<br>
+                L:0.90 | R:0.15
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4784 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0131</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.40<br>
+                L:0.79 | R:0.03
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2742 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0132</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.41<br>
+                L:0.79 | R:0.05
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2799 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0133</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.03 | M:0.86<br>
+                L:1.00 | R:0.47
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4890 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0134</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.40<br>
+                L:0.79 | R:0.03
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2739 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0135</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.02 | M:0.85<br>
+                L:0.93 | R:0.23
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4358 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0136</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.04 | M:0.38<br>
+                L:0.80 | R:0.01
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2507 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0137</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.08 | M:0.43<br>
+                L:0.81 | R:0.06
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2927 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Keylogging" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0138</td>
+            <td><span class="pill-heldout">Theft - Keylogging</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.13 | M:0.68<br>
+                L:0.81 | R:0.27
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4181 <span style="font-size: 11px; color: #64748b;">(τ=0.8218)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Theft - Data_Exfiltration" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0139</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Theft</strong> / Data_Exfiltration</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (22)</td>
+            <td style="font-family: monospace;">4.1161s | 33 pkts | 5796 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.28 | M:0.86<br>
+                L:0.96 | R:0.32
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5631 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Theft - Data_Exfiltration" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0140</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Theft</strong> / Data_Exfiltration</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (22)</td>
+            <td style="font-family: monospace;">2.5231s | 28 pkts | 5204 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.33 | M:0.94<br>
+                L:0.93 | R:0.89
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.6870 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Theft - Data_Exfiltration" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0141</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Theft</strong> / Data_Exfiltration</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (22)</td>
+            <td style="font-family: monospace;">2.7391s | 31 pkts | 5472 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.28 | M:0.87<br>
+                L:0.96 | R:0.33
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.5652 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (MISSED ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0142</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Theft</strong> / Data_Exfiltration</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">ARP (-1)</td>
+            <td style="font-family: monospace;">1141.0107s | 32 pkts | 1920 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.92 | M:0.94<br>
+                L:1.00 | R:0.26
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8406 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0143</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Theft</strong> / Data_Exfiltration</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (22)</td>
+            <td style="font-family: monospace;">2.517s | 27 pkts | 5138 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.96 | M:0.94<br>
+                L:0.93 | R:0.90
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9410 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0144</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Theft</strong> / Data_Exfiltration</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (22)</td>
+            <td style="font-family: monospace;">0.0659s | 6 pkts | 434 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.97 | M:0.95<br>
+                L:0.92 | R:0.86
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9377 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0145</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Theft</strong> / Data_Exfiltration</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (22)</td>
+            <td style="font-family: monospace;">2.5752s | 27 pkts | 5138 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.96 | M:0.94<br>
+                L:0.93 | R:0.90
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.9415 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0146</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Theft</strong> / Data_Exfiltration</td>
+            <td>Unseen Zero-Day Threat</td>
+            <td style="font-family: monospace;">TCP (22)</td>
+            <td style="font-family: monospace;">0.0002s | 8 pkts | 554 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.83 | M:0.96<br>
+                L:0.91 | R:0.55
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8388 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (CAUGHT ZERO-DAY)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-red" data-heldout="Theft - Data_Exfiltration" data-color="RED">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0147</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (443)</td>
+            <td style="font-family: monospace;">0.0733s | 6 pkts | 412 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.78 | M:0.97<br>
+                L:0.98 | R:0.66
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.8488 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>REJECT as Zero-Day Novel Threat</em></td>
+            <td>
+                <span class="badge-red">MISCLASSIFIED</span><br>
+                <small style="font-size: 10px; color: #475569;">ERROR (FALSE ALARM ON NORMAL)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0148</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">1681.7954s | 11771 pkts | 3484216 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.15 | M:0.91<br>
+                L:0.91 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4744 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0149</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.42<br>
+                L:0.81 | R:0.11
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2969 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0150</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0481s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.43<br>
+                L:0.81 | R:0.12
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3035 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0151</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">TCP (80)</td>
+            <td style="font-family: monospace;">43.1458s | 1982 pkts | 1924584 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.01 | M:0.89<br>
+                L:1.00 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4234 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0152</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0479s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.09 | M:0.41<br>
+                L:0.81 | R:0.11
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2960 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0153</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (565)</td>
+            <td style="font-family: monospace;">9.9788s | 430 pkts | 25800 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.02 | M:0.87<br>
+                L:0.94 | R:0.02
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4139 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0154</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">5.0425s | 2 pkts | 176 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.05 | M:0.39<br>
+                L:0.82 | R:0.09
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.2727 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0155</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">2.5009s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.15 | M:0.45<br>
+                L:0.83 | R:0.08
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.3289 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+
+        <tr class="row-green" data-heldout="Theft - Data_Exfiltration" data-color="GREEN">
+            <td style="font-weight: bold; font-family: monospace;">FLOW_0156</td>
+            <td><span class="pill-heldout">Theft - Data_Exfiltration</span></td>
+            <td><strong>Normal</strong> / Normal</td>
+            <td>Benign Normal Traffic</td>
+            <td style="font-family: monospace;">UDP (53)</td>
+            <td style="font-family: monospace;">0.0073s | 2 pkts | 172 B</td>
+            <td style="font-family: monospace; font-size: 11px;">
+                E:0.13 | M:0.70<br>
+                L:0.81 | R:0.13
+            </td>
+            <td style="font-weight: bold; font-family: monospace;">
+                0.4049 <span style="font-size: 11px; color: #64748b;">(τ=0.8094)</span>
+            </td>
+            <td><em>ACCEPTED as Known Traffic</em></td>
+            <td>
+                <span class="badge-green">CORRECT</span><br>
+                <small style="font-size: 10px; color: #475569;">CORRECT (NORMAL CLEARED)</small>
+            </td>
+        </tr>
+        
+        </tbody>
+    </table>
+
+    <script>
+        let currentColorFilter = 'ALL';
+
+        function filterColor(color, btn) {
+            currentColorFilter = color;
+            document.querySelectorAll('.controls .btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const heldout = document.getElementById('heldoutSelect').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#traceTableBody tr');
+
+            rows.forEach(row => {
+                const rColor = row.getAttribute('data-color');
+                const rHeldout = row.getAttribute('data-heldout');
+                const text = row.innerText.toLowerCase();
+
+                let matchColor = (currentColorFilter === 'ALL' || rColor === currentColorFilter);
+                let matchHeldout = (heldout === 'ALL' || rHeldout === heldout);
+                let matchSearch = (search === '' || text.includes(search));
+
+                if (matchColor && matchHeldout && matchSearch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
