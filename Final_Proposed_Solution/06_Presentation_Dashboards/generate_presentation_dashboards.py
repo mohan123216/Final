@@ -45,14 +45,14 @@ C_GRAY_TEXT = "#64748B"
 
 def create_section1_dashboard():
     print("Generating Section 1: Data Ingestion & Preprocessing Dashboard...")
-    fig = plt.figure(figsize=(19, 11.5), facecolor=C_BG)
-    gs = gridspec.GridSpec(2, 2, height_ratios=[1.0, 1.05], width_ratios=[1.0, 1.05],
-                           left=0.04, right=0.96, top=0.90, bottom=0.045, wspace=0.15, hspace=0.18)
+    fig = plt.figure(figsize=(20.0, 11.6), facecolor=C_BG)
+    gs = gridspec.GridSpec(2, 2, height_ratios=[1.0, 1.05], width_ratios=[1.0, 1.0],
+                           left=0.025, right=0.975, top=0.91, bottom=0.035, wspace=0.07, hspace=0.12)
 
     # Main Header
-    fig.text(0.04, 0.955, "SECTION 1 — RAW DATASET CHARACTERISTICS & PREPROCESSING PIPELINE",
+    fig.text(0.025, 0.958, "SECTION 1 — RAW DATASET CHARACTERISTICS & PREPROCESSING PIPELINE",
              fontsize=20, fontweight='bold', color=C_DARK)
-    fig.text(0.04, 0.925,
+    fig.text(0.025, 0.928,
              "UNSW Bot-IoT: 74-File Ingestion, Data Leakage Shield, Online Sanitation & Feature Payload Handoff",
              fontsize=12, color=C_GRAY_TEXT)
 
@@ -65,8 +65,8 @@ def create_section1_dashboard():
     ax1.set_xticks([])
     ax1.set_yticks([])
 
-    ax1.text(0.04, 0.92, "1. Raw Benchmark Scale & Streaming Ingestion", fontsize=14.5, fontweight='bold', color=C_DARK)
-    ax1.text(0.04, 0.86, "Physical properties of the 74 CSV benchmark files before processing", fontsize=10.2, color=C_GRAY_TEXT)
+    ax1.text(0.03, 0.92, "1. Raw Benchmark Scale & Streaming Ingestion", fontsize=15, fontweight='bold', color=C_DARK)
+    ax1.text(0.03, 0.86, "Physical properties of the 74 CSV benchmark files before processing", fontsize=10.5, color=C_GRAY_TEXT)
 
     c1_items = [
         ("Raw Input Corpus", "74 CSV Files (data_1.csv to data_74.csv, ~15.3 GB total)", C_BLUE),
@@ -80,8 +80,8 @@ def create_section1_dashboard():
 
     y = 0.77
     for label, val, col in c1_items:
-        ax1.text(0.04, y, f"• {label}:", fontsize=10.5, fontweight='bold', color=C_DARK, va='top')
-        ax1.text(0.35, y, val, fontsize=10.2, fontweight='bold', color=col, va='top')
+        ax1.text(0.03, y, f"• {label}:", fontsize=10.8, fontweight='bold', color=C_DARK, va='top')
+        ax1.text(0.28, y, val, fontsize=10.5, fontweight='bold', color=col, va='top')
         y -= 0.098
 
     # CARD 2 (Top-Right): Anti-Leakage Feature Exclusion (12 Dropped)
@@ -93,8 +93,8 @@ def create_section1_dashboard():
     ax2.set_xticks([])
     ax2.set_yticks([])
 
-    ax2.text(0.04, 0.92, "2. Anti-Leakage Feature Exclusion (12 Dropped)", fontsize=14.5, fontweight='bold', color=C_DARK)
-    ax2.text(0.04, 0.86, "35 Raw Attributes  ➜  12 Discarded (Anti-Leakage)  ➜  20 Retained Inputs", fontsize=10.2, color=C_GRAY_TEXT)
+    ax2.text(0.03, 0.92, "2. Anti-Leakage Feature Exclusion (12 Dropped)", fontsize=15, fontweight='bold', color=C_DARK)
+    ax2.text(0.03, 0.86, "35 Raw Attributes  ➜  12 Discarded (Anti-Leakage)  ➜  20 Retained Inputs", fontsize=10.5, color=C_GRAY_TEXT)
 
     c2_dropped = [
         ("IP Addresses (2)", "saddr, daddr", "Prevents memorizing designated attacker IP addresses.", C_RED),
@@ -106,22 +106,22 @@ def create_section1_dashboard():
 
     y = 0.77
     for grp, cols, reason, col in c2_dropped:
-        ax2.text(0.04, y, f"✗ {grp}:", fontsize=10.5, fontweight='bold', color=col, va='top')
-        ax2.text(0.32, y, f"[{cols}]", fontsize=10.0, fontweight='bold', color=C_DARK, va='top')
-        ax2.text(0.53, y, reason, fontsize=9.5, color=C_GRAY_TEXT, va='top')
+        ax2.text(0.03, y, f"✗ {grp}:", fontsize=10.8, fontweight='bold', color=col, va='top')
+        ax2.text(0.26, y, f"[{cols}]", fontsize=10.3, fontweight='bold', color=C_DARK, va='top')
+        ax2.text(0.48, y, reason, fontsize=9.8, color=C_GRAY_TEXT, va='top')
         y -= 0.086
 
     # Viva Defense Callout Box
-    callout = FancyBboxPatch((0.035, 0.05), 0.93, 0.23, boxstyle="round,pad=0.02,rounding_size=0.03",
+    callout = FancyBboxPatch((0.025, 0.05), 0.95, 0.23, boxstyle="round,pad=0.02,rounding_size=0.03",
                              facecolor="#EFF6FF", edgecolor=C_BLUE, linewidth=1.2)
     ax2.add_patch(callout)
-    ax2.text(0.06, 0.24, "VIVA DEFENSE: WHY DROP 12 FEATURES? (PREVENT SHORTCUT LEARNING)",
-             fontsize=9.8, fontweight='bold', color=C_BLUE, va='top')
-    ax2.text(0.06, 0.17,
+    ax2.text(0.045, 0.24, "VIVA DEFENSE: WHY DROP 12 FEATURES? (PREVENT SHORTCUT LEARNING)",
+             fontsize=10.2, fontweight='bold', color=C_BLUE, va='top')
+    ax2.text(0.045, 0.17,
              "Models trained with IP/MAC addresses or timestamps trivially achieve ~99.9% accuracy by\n"
              "memorizing attacker identities, but fail in real deployment. Dropping them forces our models\n"
              "to classify strictly based on behavioral traffic dynamics, packet rates, and flow statistics.",
-             fontsize=9.2, color=C_DARK, linespacing=1.3, va='top')
+             fontsize=9.5, color=C_DARK, linespacing=1.3, va='top')
 
     # CARD 3 (Bottom-Left): Preprocessing & Data Anomalies Handled
     ax3 = fig.add_subplot(gs[1, 0])
@@ -132,8 +132,8 @@ def create_section1_dashboard():
     ax3.set_xticks([])
     ax3.set_yticks([])
 
-    ax3.text(0.04, 0.92, "3. Data Sanitation & Robustness Invariants Handled", fontsize=14.5, fontweight='bold', color=C_DARK)
-    ax3.text(0.04, 0.86, "Algorithmic cleaning applied on every chunk before reservoir sampling", fontsize=10.2, color=C_GRAY_TEXT)
+    ax3.text(0.03, 0.92, "3. Data Sanitation & Robustness Invariants Handled", fontsize=15, fontweight='bold', color=C_DARK)
+    ax3.text(0.03, 0.86, "Algorithmic cleaning applied on every chunk before reservoir sampling", fontsize=10.5, color=C_GRAY_TEXT)
 
     c3_prep = [
         ("Missing / NaN Coercion", "pd.to_numeric(errors='coerce').fillna(0.0) across all columns.", C_TEAL),
@@ -147,8 +147,8 @@ def create_section1_dashboard():
 
     y = 0.77
     for title, desc, col in c3_prep:
-        ax3.text(0.04, y, f"✔ {title}:", fontsize=10.4, fontweight='bold', color=col, va='top')
-        ax3.text(0.38, y, desc, fontsize=9.6, color=C_GRAY_TEXT, va='top')
+        ax3.text(0.03, y, f"✔ {title}:", fontsize=10.6, fontweight='bold', color=col, va='top')
+        ax3.text(0.32, y, desc, fontsize=10.0, color=C_GRAY_TEXT, va='top')
         y -= 0.098
 
     # CARD 4 (Bottom-Right): Clean 20-Feature Payload (Handoff to Next Slide)
@@ -160,8 +160,8 @@ def create_section1_dashboard():
     ax4.set_xticks([])
     ax4.set_yticks([])
 
-    ax4.text(0.04, 0.92, "4. Clean 20-Feature Payload (Handoff to Sampling)", fontsize=14.5, fontweight='bold', color=C_DARK)
-    ax4.text(0.04, 0.86, "Clean feature vector forwarded directly into Stratified Streaming Sampling", fontsize=10.2, color=C_GRAY_TEXT)
+    ax4.text(0.03, 0.92, "4. Clean 20-Feature Payload (Handoff to Sampling)", fontsize=15, fontweight='bold', color=C_DARK)
+    ax4.text(0.03, 0.86, "Clean feature vector forwarded directly into Stratified Streaming Sampling", fontsize=10.5, color=C_GRAY_TEXT)
 
     c4_payload = [
         ("Categorical Protocol Encodings (3)", "proto_number, flgs_number, state_number", C_BLUE),
@@ -174,21 +174,21 @@ def create_section1_dashboard():
 
     y = 0.77
     for title, feat_str, col in c4_payload:
-        ax4.text(0.04, y, f"▶ {title}:", fontsize=10.4, fontweight='bold', color=col, va='top')
-        ax4.text(0.44, y, feat_str, fontsize=9.8, fontweight='bold', color=C_DARK, va='top')
+        ax4.text(0.03, y, f"▶ {title}:", fontsize=10.6, fontweight='bold', color=col, va='top')
+        ax4.text(0.40, y, feat_str, fontsize=10.2, fontweight='bold', color=C_DARK, va='top')
         y -= 0.086
 
     # Pipeline Bridge Banner
-    bridge_box = FancyBboxPatch((0.035, 0.05), 0.93, 0.21, boxstyle="round,pad=0.02,rounding_size=0.03",
+    bridge_box = FancyBboxPatch((0.025, 0.05), 0.95, 0.21, boxstyle="round,pad=0.02,rounding_size=0.03",
                                 facecolor="#F0FDF4", edgecolor=C_GREEN, linewidth=1.2)
     ax4.add_patch(bridge_box)
-    ax4.text(0.06, 0.22, "PIPELINE BRIDGE ➜ NEXT STAGE (SLIDE 2): STRATIFIED STREAMING SAMPLING",
-             fontsize=9.8, fontweight='bold', color=C_GREEN, va='top')
-    ax4.text(0.06, 0.15,
+    ax4.text(0.045, 0.22, "PIPELINE BRIDGE ➜ NEXT STAGE (SLIDE 2): STRATIFIED STREAMING SAMPLING",
+             fontsize=10.2, fontweight='bold', color=C_GREEN, va='top')
+    ax4.text(0.045, 0.15,
              "This sanitized 20-feature stream is piped directly into Stage 2: Dynamic Bernoulli Reservoir\n"
              "Sampling (100% rare class retention + 10,000 cap per flood) to generate the balanced 61,130-flow\n"
              "benchmark corpus without memory exhaustion.",
-             fontsize=9.1, color=C_DARK, linespacing=1.28, va='top')
+             fontsize=9.4, color=C_DARK, linespacing=1.28, va='top')
 
     out_p = os.path.join(PLOTS_DIR, "section1_data_processing_dashboard.png")
     fig.savefig(out_p, dpi=300)
