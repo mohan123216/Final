@@ -53,6 +53,7 @@ def run_demo():
         (os.path.join(RESULTS_DIR, "tier2_sample_test_inputs_rejection_trace.csv"), "tier2_sample_test_inputs_rejection_trace.csv"),
         (os.path.join(RESULTS_DIR, "comparison_perimeter_vs_novelty_metrics.png"), "comparison_perimeter_vs_novelty_metrics.png"),
         (os.path.join(RESULTS_DIR, "detailed_class_transition_matrix.png"), "detailed_class_transition_matrix.png"),
+        (os.path.join(RESULTS_DIR, "three_way_full_transition_matrix.png"), "three_way_full_transition_matrix.png"),
         (os.path.join(RESULTS_DIR, "all_10_attacks_leave_one_out_classification_trace.csv"), "all_10_attacks_leave_one_out_classification_trace.csv"),
         (os.path.join(RESULTS_DIR, "all_10_attacks_leave_one_out_classification_trace.html"), "all_10_attacks_leave_one_out_classification_trace.html"),
         (os.path.join(RESULTS_DIR, "all_tested_flows_full_evaluation_with_color_tags.csv"), "all_tested_flows_full_evaluation_with_color_tags.csv"),
