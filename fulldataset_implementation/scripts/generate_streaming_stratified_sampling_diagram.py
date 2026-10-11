@@ -170,14 +170,14 @@ stage3_items = [
     (r"$\bf{Label\ Cleansing:}$", "Harmonizes 'DoS-UDP' & class hierarchy"),
     (r"$\bf{Identifier\ Drop:}$", "Removes saddr, daddr, pkSeqID, seq"),
     (r"$\bf{Leakage\ Shield:}$", "Prevents model memorizing IP addresses"),
-    (r"$\bf{Feature\ Output:}$", "Retains 23 pure rate, flow, & flag features")
+    (r"$\bf{Feature\ Output:}$", "Retains 20 flow features (+ 3 label columns)")
 ]
 
 sy = 83.0
 for label, val in stage3_items:
     ax.text(74.5, sy, label, fontsize=9.0, color=C_DARK)
     ax.text(74.5, sy - 2.0, f"• {val}", fontsize=8.5,
-            color=C_AMBER if ("771" in val or "23 pure" in val) else C_TEXT_MUTED)
+            color=C_AMBER if ("771" in val or "20 flow" in val) else C_TEXT_MUTED)
     sy -= 6.0
 
 # Arrow from Stage 3 down to Stage 4
@@ -251,3 +251,18 @@ out_file = os.path.join(OUTPUT_DIR, "streaming_stratified_sampling_pipeline.png"
 plt.savefig(out_file, dpi=300, bbox_inches='tight')
 plt.close(fig)
 print(f"Generated streaming stratified sampling diagram: {out_file}")
+
+import shutil
+sync_destinations = [
+    r"d:\p01\Final_Proposed_Solution\06_Presentation_Dashboards\plots\streaming_stratified_sampling_pipeline.png",
+    r"d:\p01\Iot_bot\Final_Proposed_Solution\06_Presentation_Dashboards\plots\streaming_stratified_sampling_pipeline.png",
+    r"d:\p01\Live_Demonstration\outputs\step1_data_preprocessing\streaming_stratified_sampling_pipeline.png",
+    r"d:\p01\Iot_bot\fulldataset_implementation\outputs\plots\streaming_stratified_sampling_pipeline.png"
+]
+for dst in sync_destinations:
+    try:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy(out_file, dst)
+        print(f"  -> Synced to: {dst}")
+    except Exception as e:
+        print(f"  Warning syncing to {dst}: {e}")
