@@ -126,9 +126,14 @@ Final_Proposed_Solution/
 │       ├── balanced_multiclass_confusion_matrix.png
 │       └── class_imbalance_before_and_after.png
 │
-└── 07_Final_Reports/                         # STEP 7: Full Reports & Viva Cheat Sheet
-    ├── FULL_DATASET_ZERO_DAY_IMPLEMENTATION_REPORT.md # Formal academic technical report
-    └── QUICK_CHEAT_SHEET_FOR_VIVA.md         # 1-page quick answers to tough examiner questions
+├── 07_Final_Reports/                         # STEP 7: Full Reports & Viva Cheat Sheet
+│   ├── FULL_DATASET_ZERO_DAY_IMPLEMENTATION_REPORT.md # Formal academic technical report
+│   └── QUICK_CHEAT_SHEET_FOR_VIVA.md         # 1-page quick answers to tough examiner questions
+│
+└── 08_Interactive_Panel_Review_Dashboard/    # STEP 8: Live Interactive Panel Review UI/UX
+    ├── index.html                            # Standalone Monochrome Web App (Full-Pipeline & Simulator)
+    ├── launch_dashboard.py                   # Python 1-click launcher for default browser
+    └── README_STEP_8.md                      # Guide to presenting the interactive UI during panel review
 ```
 
 ---
