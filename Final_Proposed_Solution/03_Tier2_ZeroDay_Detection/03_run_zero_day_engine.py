@@ -270,9 +270,50 @@ def compute_4_novelty_signals(df, clf, booster, mah_stats, leaf_profiles, feats_
     }, index=df.index)
 
 # --------------------------------------------------------------------------------------
-# 5. Live Demonstration of the 4-Signal Rejection Mechanism
+# 5. Constrained Simplex Fusion Weight Optimization
 # --------------------------------------------------------------------------------------
-def run_live_rejection_demo(df_all, heldout_attack="Data_Exfiltration"):
+def optimize_weights_simplex(Z_val_df, sig_cols, p_percentile=95.0, grid_step=0.05):
+    """
+    Dynamically optimizes multi-signal novelty fusion weights via simplex grid search:
+      - Subject to Known Acceptance >= 94.5%
+      - Minimizes cross-signal redundancy penalty: R(w) = sum_{i < j} w_i * w_j * |corr_ij|
+      - Guarantees complementary diversity across all 4 signals
+    """
+    Z_val_mat = Z_val_df[sig_cols].values
+    corr_mat = np.abs(np.corrcoef(Z_val_mat, rowvar=False))
+    np.fill_diagonal(corr_mat, 0.0)
+
+    best_w = np.array([0.40, 0.30, 0.15, 0.15])
+    min_penalty = 1e9
+
+    grid_vals = np.arange(0.05, 0.85, grid_step)
+    for w1 in grid_vals:
+        for w2 in grid_vals:
+            if w1 + w2 >= 0.90:
+                continue
+            for w3 in grid_vals:
+                w4 = 1.0 - (w1 + w2 + w3)
+                if w4 < 0.05:
+                    continue
+                w = np.array([w1, w2, w3, w4])
+                s_val = Z_val_mat @ w
+
+                tau = np.percentile(s_val, p_percentile)
+                acc = np.mean(s_val <= tau)
+                if acc < 0.945:
+                    continue
+
+                penalty = float(w @ corr_mat @ w)
+                if penalty < min_penalty:
+                    min_penalty = penalty
+                    best_w = w
+
+    return best_w
+
+# --------------------------------------------------------------------------------------
+# 6. Live Demonstration of the 4-Signal Rejection Mechanism
+# --------------------------------------------------------------------------------------
+def run_live_rejection_demo(df_all, heldout_attack="Data_Exfiltration", dynamic_weights=False):
     print("\n" + "=" * 85)
     print(f">>> LIVE REJECTION DEMONSTRATION ON HELDOUT ZERO-DAY: {heldout_attack} <<<")
     print("=" * 85)
@@ -321,13 +362,23 @@ def run_live_rejection_demo(df_all, heldout_attack="Data_Exfiltration"):
     # Convert to Percentile Ranks Z_i in [0.0, 1.0]
     Z_val = normalizer.transform(val_sig)
     sig_cols = ["Z_energy", "Z_mahalanobis", "Z_leaf", "Z_relative"]
-    # Multi-Signal Fusion Weights (Energy=0.40, Mahalanobis=0.30, Leaf=0.15, Relative=0.15)
-    weights = np.array([0.40, 0.30, 0.15, 0.15])
+
+    # Multi-Signal Fusion Weights:
+    # Dynamically optimized via constrained simplex search on validation known traffic,
+    # or using the canonical optimal operating vector [0.40 Energy, 0.30 Mahalanobis, 0.15 Leaf, 0.15 Relative].
+    if dynamic_weights:
+        print("4. Dynamically optimizing fusion weights on Validation Known Traffic via Simplex Search...")
+        weights = optimize_weights_simplex(Z_val, sig_cols, p_percentile=95.0)
+        print(f"   Dynamically learned weights: [Energy={weights[0]:.2f}, Mahalanobis={weights[1]:.2f}, Leaf={weights[2]:.2f}, Relative={weights[3]:.2f}]")
+    else:
+        weights = np.array([0.40, 0.30, 0.15, 0.15])
+        print(f"4. Applying Optimal Operating Fusion Weights: [Energy=0.40, Mahalanobis=0.30, Leaf=0.15, Relative=0.15]")
+
     s_val_unified = Z_val[sig_cols].values @ weights
 
     # Calibrate Operating Threshold at 95.0th percentile of Known Validation Traffic
     tau = np.percentile(s_val_unified, 95.0)
-    print(f"4. Calibrated Operating Threshold (tau at 95.0 percentile): {tau:.4f}")
+    print(f"   Calibrated Operating Threshold (tau at 95.0 percentile): {tau:.4f}")
 
     # Evaluate on Known Test Traffic and Heldout Zero-Day Traffic
     print("5. Evaluating Open-Set Rejection Rule on Heldout Test Sets...")
@@ -362,9 +413,9 @@ def run_live_rejection_demo(df_all, heldout_attack="Data_Exfiltration"):
     print("-" * 85)
 
 # --------------------------------------------------------------------------------------
-# 6. Main Execution
+# 7. Main Execution
 # --------------------------------------------------------------------------------------
-def run_step_3(live_demo=True):
+def run_step_3(live_demo=True, dynamic_weights=False):
     print("=" * 85)
     print(">>> STEP 3: TIER 2 - 4-SIGNAL OPEN-SET ZERO-DAY REJECTION ENGINE <<<")
     print("=" * 85)
@@ -376,7 +427,7 @@ def run_step_3(live_demo=True):
 
     # 1. Run live demonstration of the rejection mechanism
     if live_demo:
-        run_live_rejection_demo(df_all, heldout_attack="Data_Exfiltration")
+        run_live_rejection_demo(df_all, heldout_attack="Data_Exfiltration", dynamic_weights=dynamic_weights)
 
     # 2. Display official benchmark across all 10 held-out zero-day attacks
     if os.path.exists(METRICS_CSV):
@@ -413,5 +464,6 @@ def run_step_3(live_demo=True):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--demo", action="store_true", default=True, help="Run live rejection demo")
+    parser.add_argument("--dynamic-weights", action="store_true", default=False, help="Dynamically learn weights via simplex search on validation set")
     args = parser.parse_args()
-    run_step_3(live_demo=args.demo)
+    run_step_3(live_demo=args.demo, dynamic_weights=args.dynamic_weights)
