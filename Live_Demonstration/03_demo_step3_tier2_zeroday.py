@@ -45,6 +45,9 @@ def run_demo():
     png_script = os.path.join(STEP3_DIR, "generate_comparison_and_transition_pngs.py")
     if os.path.exists(png_script):
         subprocess.run([sys.executable, png_script], cwd=CURRENT_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    png_script2 = os.path.join(STEP3_DIR, "generate_per_model_three_stream_table_png.py")
+    if os.path.exists(png_script2):
+        subprocess.run([sys.executable, png_script2], cwd=CURRENT_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     # Sync generated artifacts to Live_Demonstration/outputs/step3_tier2_zeroday/
     artifacts_to_sync = [
@@ -54,6 +57,7 @@ def run_demo():
         (os.path.join(RESULTS_DIR, "comparison_perimeter_vs_novelty_metrics.png"), "comparison_perimeter_vs_novelty_metrics.png"),
         (os.path.join(RESULTS_DIR, "detailed_class_transition_matrix.png"), "detailed_class_transition_matrix.png"),
         (os.path.join(RESULTS_DIR, "three_way_full_transition_matrix.png"), "three_way_full_transition_matrix.png"),
+        (os.path.join(RESULTS_DIR, "per_model_three_stream_mapping_table.png"), "per_model_three_stream_mapping_table.png"),
         (os.path.join(RESULTS_DIR, "all_10_attacks_leave_one_out_classification_trace.csv"), "all_10_attacks_leave_one_out_classification_trace.csv"),
         (os.path.join(RESULTS_DIR, "all_10_attacks_leave_one_out_classification_trace.html"), "all_10_attacks_leave_one_out_classification_trace.html"),
         (os.path.join(RESULTS_DIR, "all_tested_flows_full_evaluation_with_color_tags.csv"), "all_tested_flows_full_evaluation_with_color_tags.csv"),
