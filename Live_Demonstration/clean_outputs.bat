@@ -1,4 +1,4 @@
 @echo off
-title Reset Live Demo Outputs
-python clean_outputs.py
+title Reset and Wipe All Demo Outputs
+python reset_all_outputs.py
 pause
