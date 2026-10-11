@@ -52,18 +52,45 @@ To ensure academic validity and zero data leakage:
 
 ---
 
+## 🧹 Missing Values, Infinite Values & Categorical Encoding Pipeline
+
+In [`01_stream_clean_full_dataset.py`](file:///d:/p01/Final_Proposed_Solution/01_Data_Preprocessing/01_stream_clean_full_dataset.py), all raw network data is sanitized in the following order:
+
+### 1. Missing Values & String Coercion:
+```python
+for nc in NUM_COLS:
+    sub_chunk[nc] = pd.to_numeric(sub_chunk[nc], errors="coerce").fillna(0.0)
+    sub_chunk[nc] = sub_chunk[nc].replace([np.inf, -np.inf], 0.0)
+```
+- Any non-numeric string or corrupt character is safely coerced to `NaN`, then filled with `0.0`.
+- Mathematical division-by-zero artifacts resulting in `+inf` or `-inf` (e.g. zero-duration packet rates) are replaced with `0.0`.
+
+### 2. Hexadecimal Port Number Sanitization (`parse_port_val`):
+- Network flow dumps in UNSW Bot-IoT occasionally store ports as hexadecimal strings (e.g. `0x0303` -> `771`) or negative flags (`-1`).
+- `parse_port_val()` safely parses `0x` hexadecimal prefixes to clean 32-bit integers and converts missing ports to `-1`.
+
+### 3. Categorical Numerical Encodings:
+- **Protocols (`proto` -> `proto_number`):** `tcp` = 1, `arp` = 2, `udp` = 3, `icmp` = 4, `ipv6-icmp` = 5, `other` = 0.
+- **TCP Flags (`flgs` -> `flgs_number`):** 12 distinct TCP flag permutations mapped to integers 1 through 12.
+- **Connection States (`state` -> `state_number`):** 12 TCP connection states (`RST`, `CON`, `REQ`, `INT`, `FIN`, `ACC`, etc.) mapped to integers 1 through 12.
+
+---
+
 ## 🚀 How to Run This Step
-From this folder, run:
+
+### Default Fast Verification:
 ```powershell
 python 01_stream_clean_full_dataset.py
 ```
-- **Execution Time:** ~0.5 seconds (reads parquet instantly).
-- **Outputs Produced:**
-  - `dataset/fulldataset_cleaned_sample.parquet` (Optimized binary column format, 3.7 MB).
-  - `dataset/fulldataset_cleaned_sample.csv` (Standard human-readable CSV, 7.3 MB).
-  - `dataset/class_distribution_full_74files.csv` (Audit table).
+- **Execution Time:** ~0.15 seconds (validates the preprocessed 61,130-flow corpus).
+
+### Re-Streaming from Raw 74 CSV Files:
+```powershell
+python 01_stream_clean_full_dataset.py --rebuild
+```
+- Discovers `d:\p01\dataset\data_*.csv`, streams all 74 files chunk-by-chunk, cleans, encodes, imputes, and recreates the corpus.
 
 ---
 
 ## 🎤 How to Explain Step 1 in a Presentation / Viva
-> *"In Step 1, we tackled the extreme class imbalance of the 73.3 million flow UNSW Bot-IoT dataset, where DoS floods represent 99.9% of traffic while benign normal traffic is only 0.013%. Instead of naive sampling which would erase the rare attacks, we implemented an Equal-Quota Streaming Reservoir. We preserved 100% of all 9,543 normal flows and all 1,587 theft attacks, while capping flood classes at 10,000 flows each. This produced a balanced 61,130-flow representative corpus with zero IP-address leakage."*
+> *"In Step 1, we tackled the extreme class imbalance of the 73.3 million flow UNSW Bot-IoT dataset, where DoS floods represent 99.9% of traffic while benign normal traffic is only 0.013%. Instead of naive sampling which would erase rare attacks, we implemented an Equal-Quota Streaming Reservoir. We preserved 100% of all 9,543 normal flows and all 1,587 theft attacks, while capping flood classes at 10,000 flows each. We handled missing values by coercing corrupt strings to NaN and filling with 0.0, replaced infinite rates with 0.0, parsed hexadecimal port values, and encoded protocols and TCP flags into numerical representations, while stripping IP addresses and timestamps to prevent data leakage."*
