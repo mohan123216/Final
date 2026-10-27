@@ -1,7 +1,7 @@
 ================================================================================
           HOMZ-ENGINE: FORMAL INTEGRITY & ZERO-LEAKAGE CERTIFICATE
 ================================================================================
-Timestamp: 2026-10-11 11:52:19
+Timestamp: 2026-10-11 22:59:35
 Dataset: UNSW Bot-IoT Benchmark (73,370,443 flows total corpus across 74 files)
 Verified Evaluation Corpus: 61,130 flows
 

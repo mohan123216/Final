@@ -1,0 +1,9 @@
+Subcategory,Role,Total_Flows,Caught_or_Correct,Success_Rate_pct
+UDP,Cyberattack,1981230,1981187,100.0
+TCP,Cyberattack,1593180,1593147,100.0
+Service_Scan,Cyberattack,73168,72924,99.67
+OS_Fingerprint,Cyberattack,17914,17886,99.84
+HTTP,Cyberattack,2474,2467,99.72
+Normal,Normal Traffic,477,475,99.58
+Keylogging,Cyberattack,73,72,98.63
+Data_Exfiltration,Cyberattack,6,6,100.0

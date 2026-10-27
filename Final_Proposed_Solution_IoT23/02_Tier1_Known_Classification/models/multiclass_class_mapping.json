@@ -1,0 +1,30 @@
+{
+  "classes": [
+    "Attack",
+    "C&C",
+    "C&C-FileDownload",
+    "C&C-HeartBeat",
+    "C&C-HeartBeat-FileDownload",
+    "C&C-Mirai",
+    "C&C-Torii",
+    "DDoS",
+    "FileDownload",
+    "HorizontalPortScan",
+    "Normal",
+    "Okiru"
+  ],
+  "mapping": {
+    "Attack": 0,
+    "C&C": 1,
+    "C&C-FileDownload": 2,
+    "C&C-HeartBeat": 3,
+    "C&C-HeartBeat-FileDownload": 4,
+    "C&C-Mirai": 5,
+    "C&C-Torii": 6,
+    "DDoS": 7,
+    "FileDownload": 8,
+    "HorizontalPortScan": 9,
+    "Normal": 10,
+    "Okiru": 11
+  }
+}

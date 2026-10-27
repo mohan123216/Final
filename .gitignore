@@ -55,6 +55,10 @@ data_names.csv
 *.tar.gz
 *.zip
 
+# Raw CIC-IDS-2018 and IoT-23 datasets
+cic-18/
+iot-23/
+
 # Full dataset implementation parquet
 fulldataset_implementation/data/*
 !fulldataset_implementation/data/.gitkeep

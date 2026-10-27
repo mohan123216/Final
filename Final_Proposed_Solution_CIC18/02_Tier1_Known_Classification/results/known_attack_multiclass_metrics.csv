@@ -1,0 +1,16 @@
+Subcategory,Precision_pct,Recall_pct,F1_Score_pct,Test_Support
+Bot,100.0,100.0,100.0,1000
+BruteForce_Web,75.86,90.16,82.4,122
+BruteForce_XSS,91.49,93.48,92.47,46
+FTP_BruteForce,93.63,39.7,55.76,1000
+GoldenEye,99.9,100.0,99.95,1000
+HOIC,99.8,100.0,99.9,1000
+Hulk,100.0,100.0,100.0,1000
+Infiltration,78.46,94.7,85.82,1000
+LOIC_HTTP,100.0,100.0,100.0,1000
+LOIC_UDP,100.0,100.0,100.0,346
+Normal,96.66,85.25,90.6,2000
+SQL_Injection,71.43,83.33,76.92,18
+SSH_Bruteforce,100.0,100.0,100.0,1000
+SlowHTTPTest,61.74,97.3,75.54,1000
+Slowloris,100.0,99.9,99.95,1000

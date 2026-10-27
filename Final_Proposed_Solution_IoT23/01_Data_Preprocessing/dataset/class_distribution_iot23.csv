@@ -1,0 +1,13 @@
+Raw_Detailed_Label,Category,Subcategory,Corpus_Flows
+-,Normal,Normal,10000
+PartOfAHorizontalPortScan,PortScan,HorizontalPortScan,5000
+C&C,C&C,C&C,5000
+Okiru,Botnet,Okiru,5000
+DDoS,DDoS,DDoS,5000
+Attack,Attack,Attack,1374
+C&C-HeartBeat,C&C,C&C-HeartBeat,216
+C&C-FileDownload,C&C,C&C-FileDownload,44
+C&C-Torii,C&C,C&C-Torii,30
+FileDownload,FileDownload,FileDownload,16
+C&C-HeartBeat-FileDownload,C&C,C&C-HeartBeat-FileDownload,11
+C&C-Mirai,C&C,C&C-Mirai,1

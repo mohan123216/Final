@@ -1,0 +1,11 @@
+Evaluation_Scenario,Precision,Recall,Accuracy,F1_Score,Error_Rate
+Zero-Day: HorizontalPortScan vs Benign Normal,0.997,0.9990000000000001,0.9982,0.998,0.0018
+Zero-Day: DDoS vs Benign Normal,0.998,1.0,0.9990000000000001,0.9990000000000001,0.001
+Zero-Day: Okiru vs Benign Normal,0.997,0.998,0.998,0.9975,0.002
+Zero-Day: C&C vs Benign Normal,0.992,0.9940000000000001,0.995,0.993,0.005
+Zero-Day: Attack vs Benign Normal,0.995,0.997,0.996,0.996,0.004
+Zero-Day: C&C-HeartBeat vs Benign Normal,0.986,0.9906999999999999,0.9940000000000001,0.9883,0.006
+Zero-Day: C&C-Torii vs Benign Normal,0.9670000000000001,0.9667,0.997,0.9668000000000001,0.003
+Zero-Day: C&C-FileDownload vs Benign Normal,0.955,0.9545,0.998,0.9547,0.002
+Zero-Day: FileDownload vs Benign Normal,0.938,0.9375,0.9990000000000001,0.9377,0.001
+Zero-Day: C&C-HeartBeat-FileDownload vs Benign Normal,0.909,0.9091,0.9990000000000001,0.909,0.001

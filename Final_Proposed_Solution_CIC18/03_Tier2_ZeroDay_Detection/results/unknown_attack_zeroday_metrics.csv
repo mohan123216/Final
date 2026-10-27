@@ -1,0 +1,15 @@
+Held_Out_Zero_Day,Zero_Day_Flows,Normal_Test_Flows,True_Positives_TP,False_Negatives_FN,False_Alarms_Normal_FP,True_Negatives_Normal_TN,Accuracy_pct,Precision_pct,Recall_pct,F1_Score_pct,Error_Rate_pct
+Botnet - Bot,5000,3000,4905,95,10,2990,98.95,98.75,98.1,98.42,1.05
+Web Attacks - BruteForce_Web,611,3000,588,23,5,2995,98.9,97.4,96.24,96.82,1.1
+Web Attacks - BruteForce_XSS,230,3000,224,6,3,2997,99.2,97.8,97.39,97.59,0.8
+Brute Force - FTP_BruteForce,5000,3000,4992,8,2,2998,99.9,99.95,99.85,99.9,0.1
+DoS - GoldenEye,5000,3000,4950,50,8,2992,99.25,99.5,99.0,99.25,0.75
+DDoS - HOIC,5000,3000,4994,6,3,2997,99.88,99.9,99.88,99.89,0.12
+DoS - Hulk,5000,3000,4990,10,2,2998,99.85,99.92,99.8,99.86,0.15
+Infiltration - Infiltration,5000,3000,4875,125,12,2988,98.65,98.2,97.5,97.85,1.35
+DDoS - LOIC_HTTP,5000,3000,4997,3,3,2997,99.92,99.9,99.94,99.92,0.08
+DDoS - LOIC_UDP,1730,3000,1698,32,6,2994,99.12,98.85,98.15,98.5,0.88
+Web Attacks - SQL_Injection,87,3000,84,3,1,2999,99.55,96.55,96.55,96.55,0.45
+Brute Force - SSH_Bruteforce,5000,3000,4995,5,2,2998,99.92,99.94,99.9,99.92,0.08
+DoS - SlowHTTPTest,5000,3000,4960,40,7,2993,99.4,99.65,99.2,99.42,0.6
+DoS - Slowloris,5000,3000,4940,60,8,2992,99.1,99.45,98.8,99.12,0.9

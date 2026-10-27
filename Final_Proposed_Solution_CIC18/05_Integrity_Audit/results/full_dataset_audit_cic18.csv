@@ -1,0 +1,16 @@
+Class,Total_Flows
+Botnet - Bot,5000
+Brute Force - FTP_BruteForce,5000
+Brute Force - SSH_Bruteforce,5000
+DDoS - HOIC,5000
+DDoS - LOIC_HTTP,5000
+DDoS - LOIC_UDP,1730
+DoS - GoldenEye,5000
+DoS - Hulk,5000
+DoS - SlowHTTPTest,5000
+DoS - Slowloris,5000
+Infiltration - Infiltration,5000
+Normal - Normal,10000
+Web Attacks - BruteForce_Web,611
+Web Attacks - BruteForce_XSS,230
+Web Attacks - SQL_Injection,87

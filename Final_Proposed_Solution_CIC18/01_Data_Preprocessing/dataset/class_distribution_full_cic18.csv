@@ -1,0 +1,16 @@
+Raw_Label,Category,Subcategory,Raw_Count,Sample_Count,Retention_Pct
+Benign,Normal,Normal,3447608,10000,0.2901
+DDOS attack-HOIC,DDoS,HOIC,686012,5000,0.7289
+DDoS attacks-LOIC-HTTP,DDoS,LOIC_HTTP,448979,5000,1.1136
+FTP-BruteForce,Brute Force,FTP_BruteForce,193360,5000,2.5859
+SSH-Bruteforce,Brute Force,SSH_Bruteforce,187589,5000,2.6654
+Infilteration,Infiltration,Infiltration,161934,5000,3.0877
+Bot,Botnet,Bot,124751,5000,4.008
+DoS attacks-SlowHTTPTest,DoS,SlowHTTPTest,91434,5000,5.4684
+DoS attacks-Hulk,DoS,Hulk,43073,5000,11.6082
+DoS attacks-GoldenEye,DoS,GoldenEye,41508,5000,12.0459
+DoS attacks-Slowloris,DoS,Slowloris,10990,5000,45.4959
+DDOS attack-LOIC-UDP,DDoS,LOIC_UDP,1730,1730,100.0
+Brute Force -Web,Web Attacks,BruteForce_Web,611,611,100.0
+Brute Force -XSS,Web Attacks,BruteForce_XSS,230,230,100.0
+SQL Injection,Web Attacks,SQL_Injection,87,87,100.0

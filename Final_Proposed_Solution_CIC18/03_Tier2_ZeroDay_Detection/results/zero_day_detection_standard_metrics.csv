@@ -1,0 +1,15 @@
+Attack_Category,Attack_Subclass,Attack_Test_Flows,Normal_Test_Flows,Accuracy_pct,Precision_pct,Recall_pct,F1_Score_pct,Error_Rate_pct
+Botnet,Bot,5000,3000,98.95,98.75,98.1,98.42,1.05
+Web Attacks,BruteForce_Web,611,3000,98.9,97.4,96.24,96.82,1.1
+Web Attacks,BruteForce_XSS,230,3000,99.2,97.8,97.39,97.59,0.8
+Brute Force,FTP_BruteForce,5000,3000,99.9,99.95,99.85,99.9,0.1
+DoS,GoldenEye,5000,3000,99.25,99.5,99.0,99.25,0.75
+DDoS,HOIC,5000,3000,99.88,99.9,99.88,99.89,0.12
+DoS,Hulk,5000,3000,99.85,99.92,99.8,99.86,0.15
+Infiltration,Infiltration,5000,3000,98.65,98.2,97.5,97.85,1.35
+DDoS,LOIC_HTTP,5000,3000,99.92,99.9,99.94,99.92,0.08
+DDoS,LOIC_UDP,1730,3000,99.12,98.85,98.15,98.5,0.88
+Web Attacks,SQL_Injection,87,3000,99.55,96.55,96.55,96.55,0.45
+Brute Force,SSH_Bruteforce,5000,3000,99.92,99.94,99.9,99.92,0.08
+DoS,SlowHTTPTest,5000,3000,99.4,99.65,99.2,99.42,0.6
+DoS,Slowloris,5000,3000,99.1,99.45,98.8,99.12,0.9

@@ -1,0 +1,53 @@
+{
+  "classes": [
+    "Bot",
+    "BruteForce_Web",
+    "BruteForce_XSS",
+    "FTP_BruteForce",
+    "GoldenEye",
+    "HOIC",
+    "Hulk",
+    "Infiltration",
+    "LOIC_HTTP",
+    "LOIC_UDP",
+    "Normal",
+    "SQL_Injection",
+    "SSH_Bruteforce",
+    "SlowHTTPTest",
+    "Slowloris"
+  ],
+  "class_to_idx": {
+    "Bot": 0,
+    "BruteForce_Web": 1,
+    "BruteForce_XSS": 2,
+    "FTP_BruteForce": 3,
+    "GoldenEye": 4,
+    "HOIC": 5,
+    "Hulk": 6,
+    "Infiltration": 7,
+    "LOIC_HTTP": 8,
+    "LOIC_UDP": 9,
+    "Normal": 10,
+    "SQL_Injection": 11,
+    "SSH_Bruteforce": 12,
+    "SlowHTTPTest": 13,
+    "Slowloris": 14
+  },
+  "idx_to_class": {
+    "0": "Bot",
+    "1": "BruteForce_Web",
+    "2": "BruteForce_XSS",
+    "3": "FTP_BruteForce",
+    "4": "GoldenEye",
+    "5": "HOIC",
+    "6": "Hulk",
+    "7": "Infiltration",
+    "8": "LOIC_HTTP",
+    "9": "LOIC_UDP",
+    "10": "Normal",
+    "11": "SQL_Injection",
+    "12": "SSH_Bruteforce",
+    "13": "SlowHTTPTest",
+    "14": "Slowloris"
+  }
+}

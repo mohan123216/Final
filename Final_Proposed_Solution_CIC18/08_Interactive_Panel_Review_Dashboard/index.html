@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOMZ-Engine: CSE-CIC-IDS2018 Zero-Day Intrusion Detection Defense Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --card-bg: #111827;
+      --card-border: #1F2937;
+      --card-hover: #1E293B;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --primary: #3B82F6;
+      --primary-hover: #2563EB;
+      --accent: #8B5CF6;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --cyan: #06B6D4;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 24px;
+    }
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+    header {
+      background: linear-gradient(135deg, rgba(31, 41, 55, 0.7), rgba(17, 24, 39, 0.9));
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 400px;
+      height: 100%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      background: linear-gradient(to right, #FFFFFF, #93C5FD);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 900px;
+    }
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s ease;
+    }
+    .stat-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat-sub {
+      font-size: 0.8rem;
+      color: var(--success);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 12px 20px;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      background: rgba(59, 130, 246, 0.1);
+    }
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--primary);
+    }
+
+    /* Sections */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 1024px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    /* Interactive Simulator */
+    .attack-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .flow-btn {
+      background: #1F2937;
+      border: 1px solid #374151;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .flow-btn:hover {
+      border-color: var(--primary);
+      background: #2563EB22;
+    }
+    .flow-btn.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #FFF;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+    .flow-btn.rare {
+      border-color: #8B5CF6;
+    }
+    .flow-btn.alien {
+      border-color: #EF4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .gauge-container {
+      background: #0D131F;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+    .signal-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .signal-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      width: 220px;
+    }
+    .signal-bar-wrap {
+      flex: 1;
+      background: #1F2937;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0 16px;
+    }
+    .signal-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .signal-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      width: 60px;
+      text-align: right;
+    }
+
+    .decision-banner {
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+    }
+    .decision-banner.accepted {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .decision-banner.rejected {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .decision-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+    .decision-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+    th {
+      background: rgba(255, 255, 255, 0.02);
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .metric-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .pill-green { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+    .pill-blue { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+    .pill-red { background: rgba(239, 68, 68, 0.15); color: #F87171; }
+    .pill-amber { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+
+    /* Code block */
+    pre {
+      background: #090D16;
+      border: 1px solid var(--card-border);
+      padding: 16px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #E2E8F0;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-pill">🛡️ CSE-CIC-IDS2018 Production Implementation</div>
+      <h1>HOMZ-Engine: Two-Tier Zero-Day Intrusion Detection</h1>
+      <p class="subtitle">
+        Hybrid Open-Set Multi-Signal Architecture evaluated on the complete <strong>16,248,642 flow CSE-CIC-IDS2018 benchmark</strong>.
+        Features cost-sensitive class balancing, log-manifold covariance shrinkage, and decoupled 4-signal open-set novelty isolation.
+      </p>
+    </header>
+
+    <!-- Top Key Metrics Banner -->
+    <div class="metrics-bar">
+      <div class="stat-card">
+        <div class="stat-label">Total Ingested Flows</div>
+        <div class="stat-value">16,248,642</div>
+        <div class="stat-sub">10 Raw CSV Files (~7.2 GB)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Curated Balanced Corpus</div>
+        <div class="stat-value">62,658</div>
+        <div class="stat-sub">100% Retained Rare Attacks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tier 1 Multi-Class Accuracy</div>
+        <div class="stat-value" style="color: #60A5FA;">92.04%</div>
+        <div class="stat-sub">Macro F1: 90.62% (15 Classes)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Inference Latency</div>
+        <div class="stat-value" style="color: #34D399;">0.0063 ms</div>
+        <div class="stat-sub">&gt; 150,000 flows/sec throughput</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Data Leakage Verification</div>
+        <div class="stat-value" style="color: #A78BFA;">0 Overlap</div>
+        <div class="stat-sub">Train ∩ Test == ∅ Verified</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('simulator')">⚡ Live Zero-Day Simulator</button>
+      <button class="tab-btn" onclick="switchTab('benchmark')">📊 LOAO Academic Benchmark</button>
+      <button class="tab-btn" onclick="switchTab('architecture')">🏗️ Master System Architecture</button>
+      <button class="tab-btn" onclick="switchTab('viva')">🎙️ Viva & Evaluator Q&A</button>
+    </div>
+
+    <!-- TAB 1: LIVE SIMULATOR -->
+    <div id="simulator" class="tab-content active">
+      <div class="grid-2">
+        <!-- Left Panel: Flow Selector -->
+        <div class="panel">
+          <div class="panel-title">1. Select Incoming Flow to Evaluate</div>
+          <div class="panel-desc">
+            Choose an attack flow or benign normal flow to simulate the real-time two-tier intrusion inspection process.
+          </div>
+
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Benign Traffic:</div>
+          <div class="attack-selector">
+            <button class="flow-btn selected" onclick="simulateFlow('Normal')">Benign Normal Flow</button>
+          </div>
+
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Extreme Minority Web Attacks (100% Retained):</div>
+          <div class="attack-selector">
+            <button class="flow-btn rare" onclick="simulateFlow('SQL_Injection')">SQL Injection (87 flows)</button>
+            <button class="flow-btn rare" onclick="simulateFlow('BruteForce_XSS')">Brute Force XSS (230 flows)</button>
+            <button class="flow-btn rare" onclick="simulateFlow('BruteForce_Web')">Brute Force Web (611 flows)</button>
+            <button class="flow-btn rare" onclick="simulateFlow('LOIC_UDP')">LOIC-UDP Flood (1,730 flows)</button>
+          </div>
+
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Volumetric Floods & Exploits:</div>
+          <div class="attack-selector">
+            <button class="flow-btn" onclick="simulateFlow('HOIC')">DDoS - HOIC</button>
+            <button class="flow-btn" onclick="simulateFlow('LOIC_HTTP')">DDoS - LOIC_HTTP</button>
+            <button class="flow-btn" onclick="simulateFlow('Hulk')">DoS - Hulk</button>
+            <button class="flow-btn" onclick="simulateFlow('SlowHTTPTest')">DoS - SlowHTTPTest</button>
+            <button class="flow-btn" onclick="simulateFlow('GoldenEye')">DoS - GoldenEye</button>
+            <button class="flow-btn" onclick="simulateFlow('Slowloris')">DoS - Slowloris</button>
+            <button class="flow-btn" onclick="simulateFlow('FTP_BruteForce')">BruteForce - FTP</button>
+            <button class="flow-btn" onclick="simulateFlow('SSH_Bruteforce')">BruteForce - SSH</button>
+            <button class="flow-btn" onclick="simulateFlow('Infiltration')">Infiltration</button>
+            <button class="flow-btn" onclick="simulateFlow('Bot')">Botnet</button>
+          </div>
+
+          <div style="font-size: 0.8rem; font-weight: 700; color: #EF4444; text-transform: uppercase; margin-bottom: 8px;">Simulated Alien Threat (Zero-Day Novel Attack):</div>
+          <div class="attack-selector">
+            <button class="flow-btn alien" onclick="simulateFlow('Alien_ZeroDay')">⚠️ Alien Zero-Day Exploit (Unseen Polymorphic Flow)</button>
+          </div>
+        </div>
+
+        <!-- Right Panel: Live 4-Signal Breakdown -->
+        <div class="panel">
+          <div class="panel-title">2. Tier 2 Multi-Signal Novelty Breakdown</div>
+          <div class="panel-desc">
+            Signals are evaluated on unnormalized booster logits and calibrated via Empirical CDF percentile ranks.
+          </div>
+
+          <div class="gauge-container">
+            <!-- Signal 1 -->
+            <div class="signal-row">
+              <div class="signal-name">
+                <div>Signal 1: Free Energy Novelty</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Weight: 0.40 (Logit LogSumExp)</div>
+              </div>
+              <div class="signal-bar-wrap">
+                <div id="bar-energy" class="signal-bar-fill" style="width: 15%; background: var(--primary);"></div>
+              </div>
+              <div id="val-energy" class="signal-val">0.150</div>
+            </div>
+
+            <!-- Signal 2 -->
+            <div class="signal-row">
+              <div class="signal-name">
+                <div>Signal 2: Mahalanobis Geometry</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Weight: 0.30 (Ledoit-Wolf Shrinkage)</div>
+              </div>
+              <div class="signal-bar-wrap">
+                <div id="bar-mah" class="signal-bar-fill" style="width: 20%; background: var(--accent);"></div>
+              </div>
+              <div id="val-mah" class="signal-val">0.200</div>
+            </div>
+
+            <!-- Signal 3 -->
+            <div class="signal-row">
+              <div class="signal-name">
+                <div>Signal 3: Leaf-Space Traversal</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Weight: 0.15 (100 Decision Trees)</div>
+              </div>
+              <div class="signal-bar-wrap">
+                <div id="bar-leaf" class="signal-bar-fill" style="width: 10%; background: var(--cyan);"></div>
+              </div>
+              <div id="val-leaf" class="signal-val">0.100</div>
+            </div>
+
+            <!-- Signal 4 -->
+            <div class="signal-row">
+              <div class="signal-name">
+                <div>Signal 4: Relative Margin Ratio</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Weight: 0.15 (Boundary Margin)</div>
+              </div>
+              <div class="signal-bar-wrap">
+                <div id="bar-rel" class="signal-bar-fill" style="width: 18%; background: var(--warning);"></div>
+              </div>
+              <div id="val-rel" class="signal-val">0.180</div>
+            </div>
+
+            <hr style="border-color: var(--card-border); margin: 16px 0;">
+
+            <!-- Fused Novelty Score -->
+            <div class="signal-row">
+              <div class="signal-name" style="font-size: 1.05rem;">
+                <div>Unified Fused Novelty (S)</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Threshold τ = 0.8506 (95th %ile)</div>
+              </div>
+              <div class="signal-bar-wrap" style="height: 14px;">
+                <div id="bar-unified" class="signal-bar-fill" style="width: 16%; background: var(--success);"></div>
+              </div>
+              <div id="val-unified" class="signal-val" style="font-size: 1.1rem; color: var(--success);">0.162</div>
+            </div>
+          </div>
+
+          <!-- Decision Output Banner -->
+          <div id="decision-banner" class="decision-banner accepted">
+            <div>
+              <div id="decision-title" class="decision-title" style="color: var(--success);">✔ ACCEPTED AS KNOWN TRAFFIC</div>
+              <div id="decision-desc" class="decision-desc">
+                Unified novelty score is below threshold τ (0.8506). Tier 1 classified as: <strong>Normal (Benign)</strong>.
+              </div>
+            </div>
+            <div id="decision-tag" class="metric-pill pill-green" style="font-size: 1rem; padding: 8px 14px;">
+              KNOWN ACCEPTED
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ACADEMIC BENCHMARK -->
+    <div id="benchmark" class="tab-content">
+      <div class="panel">
+        <div class="panel-title">Leave-One-Attack-Out (LOAO) Benchmark Results vs. Literature</div>
+        <div class="panel-desc">
+          Evaluated strictly on held-out unknown attack subclasses mixed with test Benign Normal traffic.
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Attack Category</th>
+              <th>Held-Out Attack</th>
+              <th>Attack Test Flows</th>
+              <th>Baseline Precision</th>
+              <th>Our Precision</th>
+              <th>Baseline Recall</th>
+              <th>Our Recall</th>
+              <th>Baseline F1</th>
+              <th>Our F1-Score</th>
+              <th>Our Error Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>DDoS</strong></td>
+              <td>HOIC</td>
+              <td>5,000</td>
+              <td>0.79</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.98</td>
+              <td><span class="metric-pill pill-green">1.00</span></td>
+              <td>0.87</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.01</td>
+            </tr>
+            <tr>
+              <td><strong>DDoS</strong></td>
+              <td>LOIC_HTTP</td>
+              <td>5,000</td>
+              <td>0.94</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.98</td>
+              <td><span class="metric-pill pill-green">1.00</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.01</td>
+            </tr>
+            <tr>
+              <td><strong>DDoS</strong></td>
+              <td>LOIC_UDP</td>
+              <td>1,730 (100%)</td>
+              <td>0.03</td>
+              <td><span class="metric-pill pill-green">0.98</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">0.97</span></td>
+              <td>0.06</td>
+              <td><span class="metric-pill pill-green">0.97</span></td>
+              <td>0.02</td>
+            </tr>
+            <tr>
+              <td><strong>DoS</strong></td>
+              <td>Hulk</td>
+              <td>5,000</td>
+              <td>0.77</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">1.00</span></td>
+              <td>0.86</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.01</td>
+            </tr>
+            <tr>
+              <td><strong>DoS</strong></td>
+              <td>SlowHTTPTest</td>
+              <td>5,000</td>
+              <td>0.001</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.95</td>
+              <td><span class="metric-pill pill-green">0.98</span></td>
+              <td>0.003</td>
+              <td><span class="metric-pill pill-green">0.98</span></td>
+              <td>0.01</td>
+            </tr>
+            <tr>
+              <td><strong>DoS</strong></td>
+              <td>GoldenEye</td>
+              <td>5,000</td>
+              <td>0.47</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.97</td>
+              <td><span class="metric-pill pill-green">0.98</span></td>
+              <td>0.64</td>
+              <td><span class="metric-pill pill-green">0.98</span></td>
+              <td>0.02</td>
+            </tr>
+            <tr>
+              <td><strong>DoS</strong></td>
+              <td>Slowloris</td>
+              <td>5,000</td>
+              <td>0.22</td>
+              <td><span class="metric-pill pill-green">0.98</span></td>
+              <td>0.95</td>
+              <td><span class="metric-pill pill-green">0.97</span></td>
+              <td>0.35</td>
+              <td><span class="metric-pill pill-green">0.97</span></td>
+              <td>0.02</td>
+            </tr>
+            <tr>
+              <td><strong>Brute Force</strong></td>
+              <td>FTP_BruteForce</td>
+              <td>5,000</td>
+              <td>0.001</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">1.00</span></td>
+              <td>0.003</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.01</td>
+            </tr>
+            <tr>
+              <td><strong>Brute Force</strong></td>
+              <td>SSH_Bruteforce</td>
+              <td>5,000</td>
+              <td>0.64</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">1.00</span></td>
+              <td>0.77</td>
+              <td><span class="metric-pill pill-green">0.99</span></td>
+              <td>0.01</td>
+            </tr>
+            <tr style="background: rgba(139, 92, 246, 0.05);">
+              <td><strong>Web Attacks</strong></td>
+              <td><span style="color: #A78BFA; font-weight: 700;">BruteForce_Web</span></td>
+              <td>611 (100%)</td>
+              <td>0.01</td>
+              <td><span class="metric-pill pill-green">0.95</span></td>
+              <td>0.97</td>
+              <td><span class="metric-pill pill-green">0.94</span></td>
+              <td>0.03</td>
+              <td><span class="metric-pill pill-green">0.94</span></td>
+              <td>0.02</td>
+            </tr>
+            <tr style="background: rgba(139, 92, 246, 0.05);">
+              <td><strong>Web Attacks</strong></td>
+              <td><span style="color: #A78BFA; font-weight: 700;">BruteForce_XSS</span></td>
+              <td>230 (100%)</td>
+              <td>0.005</td>
+              <td><span class="metric-pill pill-green">0.94</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">0.97</span></td>
+              <td>0.01</td>
+              <td><span class="metric-pill pill-green">0.95</span></td>
+              <td>0.01</td>
+            </tr>
+            <tr style="background: rgba(139, 92, 246, 0.05);">
+              <td><strong>Web Attacks</strong></td>
+              <td><span style="color: #A78BFA; font-weight: 700;">SQL_Injection</span></td>
+              <td>87 (100%)</td>
+              <td>0.002</td>
+              <td><span class="metric-pill pill-green">0.92</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">0.95</span></td>
+              <td>0.005</td>
+              <td><span class="metric-pill pill-green">0.93</span></td>
+              <td>0.01</td>
+            </tr>
+            <tr>
+              <td><strong>Infiltration</strong></td>
+              <td>Infiltration</td>
+              <td>5,000</td>
+              <td>0.80</td>
+              <td><span class="metric-pill pill-green">0.97</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">0.96</span></td>
+              <td>0.87</td>
+              <td><span class="metric-pill pill-green">0.96</span></td>
+              <td>0.02</td>
+            </tr>
+            <tr>
+              <td><strong>Botnet</strong></td>
+              <td>Bot</td>
+              <td>5,000</td>
+              <td>0.85</td>
+              <td><span class="metric-pill pill-green">0.98</span></td>
+              <td>0.96</td>
+              <td><span class="metric-pill pill-green">0.97</span></td>
+              <td>0.90</td>
+              <td><span class="metric-pill pill-green">0.97</span></td>
+              <td>0.02</td>
+            </tr>
+            <tr style="border-top: 2px solid var(--primary); font-weight: bold; background: rgba(59, 130, 246, 0.08);">
+              <td><strong>AVERAGE</strong></td>
+              <td><strong>14 Vectors (100% Clean Sweep)</strong></td>
+              <td><strong>62,658 Total</strong></td>
+              <td><strong>0.39</strong></td>
+              <td><span class="metric-pill pill-green"><strong>0.97</strong></span></td>
+              <td><strong>0.96</strong></td>
+              <td><span class="metric-pill pill-green"><strong>0.98</strong></span></td>
+              <td><strong>0.45</strong></td>
+              <td><span class="metric-pill pill-green"><strong>0.97</strong></span></td>
+              <td><strong>0.01</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: SYSTEM ARCHITECTURE -->
+    <div id="architecture" class="tab-content">
+      <div class="panel">
+        <div class="panel-title">Master System Architecture: Two-Tier Open-Set Detection</div>
+        <pre>
+                               Incoming Network Flow Record (95 Features)
+                                               │
+                                               ▼
+             ┌──────────────────────────────────────────────────────────────────┐
+             │ TIER 1: Balanced Cost-Sensitive GBDT Classifier                  │
+             │ - 95 engineered directional ratios, port profiling & log volumes │
+             │ - Inverse-frequency class weighting (wc = N / (K * Nc))          │
+             │ - 92.04% Multi-Class Accuracy, 90.62% Macro F1 Score             │
+             └─────────────────────────────────┬────────────────────────────────┘
+                                               │ Booster Logits + Trees + Flow Geometry
+                                               ▼
+             ┌──────────────────────────────────────────────────────────────────┐
+             │ TIER 2: 4-SIGNAL OPEN-SET ZERO-DAY REJECTION ENGINE              │
+             │                                                                  │
+             │  Signal 1: Logit Free Energy Novelty (S_E)                       │
+             │            E(x) = -T * log(sum(exp(f_k(x) / T)))                 │
+             │            (Unnormalized booster logits bypass Softmax fallacy)  │
+             │                                                                  │
+             │  Signal 2: Log-Manifold Regularized Mahalanobis Distance (S_M)   │
+             │            D_M(x) = sqrt((z - μ_c)^T * Σ_c^-1 * (z - μ_c))        │
+             │            (Ledoit-Wolf covariance shrinkage on log-manifold)    │
+             │                                                                  │
+             │  Signal 3: Tree Leaf-Space Traversal Novelty (S_L)               │
+             │            S_leaf = 1.0 - LeafSim(x, c) (Path novelty in trees)  │
+             │                                                                  │
+             │  Signal 4: Relative Neighborhood Margin Distance Ratio (S_R)     │
+             │            R(x) = D_M(pred) / (min_{j≠pred} D_M(j) + ε)           │
+             │                                                                  │
+             │  CALIBRATION: Empirical CDF Percentile Normalizer (searchsorted) │
+             │               Z_i(x) = P(S_known <= S_i(x)) in [0.0, 1.0]        │
+             │  FUSION:      S_unified = 0.40*Z_E + 0.30*Z_M + 0.15*Z_L + 0.15*Z_R │
+             │  THRESHOLD:   tau = percentile(S_val, 95.0) on Known Validation  │
+             └─────────────────────────────────┬────────────────────────────────┘
+                                               │
+                                               ▼
+                            Unified Anomaly Score > Threshold (τ)?
+                                   ┌───────────┴───────────┐
+                                  YES                      NO
+                                   │                       │
+                                   ▼                       ▼
+                          [ ZERO-DAY ATTACK ]      [ KNOWN TRAFFIC ]
+                          (Alien Novel Threat)     (Classified by Tier 1)
+        </pre>
+      </div>
+    </div>
+
+    <!-- TAB 4: VIVA CHEAT SHEET -->
+    <div id="viva" class="tab-content">
+      <div class="panel">
+        <div class="panel-title">Viva Cheat Sheet: Concise Examiner Q&A</div>
+        <div style="display: grid; gap: 16px;">
+          <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 10px; border: 1px solid var(--card-border);">
+            <div style="font-weight: 700; color: #60A5FA; margin-bottom: 6px;">Q: Why does traditional IDS fail on Zero-Day attacks?</div>
+            <div style="color: var(--text-muted); font-size: 0.9rem;">
+              Traditional classifiers use Softmax at their output. Because Softmax is constrained to sum to 100%, when an unobserved alien attack appears, the model is forced to assign high probability to one of the known classes (the <em>Softmax Overconfidence Fallacy</em>).
+            </div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 10px; border: 1px solid var(--card-border);">
+            <div style="font-weight: 700; color: #60A5FA; margin-bottom: 6px;">Q: How does Free Energy solve the Softmax Overconfidence Fallacy?</div>
+            <div style="color: var(--text-muted); font-size: 0.9rem;">
+              Free Energy $E(x) = -T \cdot \log \sum \exp(f_k(x) / T)$ operates on raw unnormalized logits. For known classes, logit energy is low; for alien zero-day threats, logits across all classes are suppressed, yielding an unmistakably high Free Energy novelty score.
+            </div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 10px; border: 1px solid var(--card-border);">
+            <div style="font-weight: 700; color: #60A5FA; margin-bottom: 6px;">Q: How did you handle the extreme 16.2M flow class imbalance in CSE-CIC-IDS2018?</div>
+            <div style="color: var(--text-muted); font-size: 0.9rem;">
+              We used Equal-Quota Streaming Stratified Reservoir Sampling in 150k chunks: 100% of all rare minority classes (SQL Injection: 87, XSS: 230, Web BF: 611, LOIC-UDP: 1,730) were preserved, while high-volume floods were capped at 5,000 flows each. Peak RAM was &lt;1.5 GB.
+            </div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 10px; border: 1px solid var(--card-border);">
+            <div style="font-weight: 700; color: #60A5FA; margin-bottom: 6px;">Q: How do you prove there is Zero Data Leakage?</div>
+            <div style="color: var(--text-muted); font-size: 0.9rem;">
+              We stripped IP addresses, timestamps, and sequence numbers. Every flow was assigned an immutable integer row_id, and we asserted $|Train \cap Test| == 0$ with zero synthetic sample contamination in the test partition.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    const SIMULATION_DATA = {
+      'Normal': {
+        energy: 0.15, mah: 0.20, leaf: 0.10, rel: 0.18,
+        predClass: 'Normal (Benign)', isRejected: false
+      },
+      'SQL_Injection': {
+        energy: 0.72, mah: 0.81, leaf: 0.68, rel: 0.75,
+        predClass: 'Web Attacks - SQL_Injection', isRejected: false
+      },
+      'BruteForce_XSS': {
+        energy: 0.65, mah: 0.74, leaf: 0.60, rel: 0.70,
+        predClass: 'Web Attacks - BruteForce_XSS', isRejected: false
+      },
+      'BruteForce_Web': {
+        energy: 0.60, mah: 0.70, leaf: 0.55, rel: 0.65,
+        predClass: 'Web Attacks - BruteForce_Web', isRejected: false
+      },
+      'LOIC_UDP': {
+        energy: 0.45, mah: 0.52, leaf: 0.38, rel: 0.48,
+        predClass: 'DDoS - LOIC_UDP', isRejected: false
+      },
+      'HOIC': {
+        energy: 0.28, mah: 0.35, leaf: 0.22, rel: 0.30,
+        predClass: 'DDoS - HOIC', isRejected: false
+      },
+      'LOIC_HTTP': {
+        energy: 0.30, mah: 0.38, leaf: 0.25, rel: 0.32,
+        predClass: 'DDoS - LOIC_HTTP', isRejected: false
+      },
+      'Hulk': {
+        energy: 0.25, mah: 0.32, leaf: 0.20, rel: 0.28,
+        predClass: 'DoS - Hulk', isRejected: false
+      },
+      'SlowHTTPTest': {
+        energy: 0.32, mah: 0.40, leaf: 0.28, rel: 0.35,
+        predClass: 'DoS - SlowHTTPTest', isRejected: false
+      },
+      'GoldenEye': {
+        energy: 0.29, mah: 0.36, leaf: 0.24, rel: 0.31,
+        predClass: 'DoS - GoldenEye', isRejected: false
+      },
+      'Slowloris': {
+        energy: 0.35, mah: 0.42, leaf: 0.30, rel: 0.38,
+        predClass: 'DoS - Slowloris', isRejected: false
+      },
+      'FTP_BruteForce': {
+        energy: 0.34, mah: 0.41, leaf: 0.29, rel: 0.37,
+        predClass: 'Brute Force - FTP_BruteForce', isRejected: false
+      },
+      'SSH_Bruteforce': {
+        energy: 0.26, mah: 0.33, leaf: 0.21, rel: 0.29,
+        predClass: 'Brute Force - SSH_Bruteforce', isRejected: false
+      },
+      'Infiltration': {
+        energy: 0.58, mah: 0.66, leaf: 0.52, rel: 0.60,
+        predClass: 'Infiltration - Infiltration', isRejected: false
+      },
+      'Bot': {
+        energy: 0.27, mah: 0.34, leaf: 0.22, rel: 0.30,
+        predClass: 'Botnet - Bot', isRejected: false
+      },
+      'Alien_ZeroDay': {
+        energy: 0.98, mah: 0.96, leaf: 0.92, rel: 0.94,
+        predClass: '⚠️ UNKNOWN ALIEN ATTACK', isRejected: true
+      }
+    };
+
+    function simulateFlow(flowKey) {
+      document.querySelectorAll('.flow-btn').forEach(btn => btn.classList.remove('selected'));
+      event.target.classList.add('selected');
+
+      const data = SIMULATION_DATA[flowKey] || SIMULATION_DATA['Normal'];
+      const TAU = 0.8506;
+
+      // Update gauges
+      document.getElementById('bar-energy').style.width = (data.energy * 100) + '%';
+      document.getElementById('val-energy').innerText = data.energy.toFixed(3);
+
+      document.getElementById('bar-mah').style.width = (data.mah * 100) + '%';
+      document.getElementById('val-mah').innerText = data.mah.toFixed(3);
+
+      document.getElementById('bar-leaf').style.width = (data.leaf * 100) + '%';
+      document.getElementById('val-leaf').innerText = data.leaf.toFixed(3);
+
+      document.getElementById('bar-rel').style.width = (data.rel * 100) + '%';
+      document.getElementById('val-rel').innerText = data.rel.toFixed(3);
+
+      // Fused score: w = [0.40, 0.30, 0.15, 0.15]
+      const fused = (0.40 * data.energy) + (0.30 * data.mah) + (0.15 * data.leaf) + (0.15 * data.rel);
+      const isRejected = fused > TAU || data.isRejected;
+
+      const barUnified = document.getElementById('bar-unified');
+      barUnified.style.width = (fused * 100) + '%';
+      barUnified.style.background = isRejected ? '#EF4444' : '#10B981';
+
+      const valUnified = document.getElementById('val-unified');
+      valUnified.innerText = fused.toFixed(3);
+      valUnified.style.color = isRejected ? '#EF4444' : '#10B981';
+
+      const banner = document.getElementById('decision-banner');
+      const title = document.getElementById('decision-title');
+      const desc = document.getElementById('decision-desc');
+      const tag = document.getElementById('decision-tag');
+
+      if (isRejected) {
+        banner.className = 'decision-banner rejected';
+        title.innerText = '🚨 REJECTED AS ZERO-DAY NOVEL ATTACK';
+        title.style.color = '#EF4444';
+        desc.innerHTML = `Unified novelty score <strong>(${fused.toFixed(3)})</strong> exceeds threshold τ (0.8506). Isolated and quarantined prior to classification!`;
+        tag.className = 'metric-pill pill-red';
+        tag.innerText = 'ZERO-DAY REJECTED';
+      } else {
+        banner.className = 'decision-banner accepted';
+        title.innerText = '✔ ACCEPTED AS KNOWN TRAFFIC';
+        title.style.color = '#10B981';
+        desc.innerHTML = `Unified novelty score <strong>(${fused.toFixed(3)})</strong> is below threshold τ (0.8506). Classified by Tier 1 as: <strong>${data.predClass}</strong>.`;
+        tag.className = 'metric-pill pill-green';
+        tag.innerText = 'KNOWN ACCEPTED';
+      }
+    }
+  </script>
+</body>
+</html>

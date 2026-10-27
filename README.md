@@ -186,68 +186,59 @@ Evaluation protocol: **Leave-One-Subclass-Out (LOCO / Type-B Unknown Attack Dete
 - Dependencies: `xgboost`, `scikit-learn`, `pandas`, `pyarrow`, `numpy`
 
 ### Step 1: Dataset Verification
-Verify that the balanced 61,130-flow sample generated from the 74 raw CSV files exists:
+Verify that the balanced sample exists:
 ```powershell
-python -c "import pandas as pd; df = pd.read_parquet('fulldataset_implementation/data/fulldataset_cleaned_sample.parquet'); print(df.shape)"
+python -c "import pandas as pd; df = pd.read_parquet('five_signal_implementation/data/fulldataset_cleaned_sample.parquet'); print(df.shape)"
 ```
 
-### Step 2: Run the Official Table 9 Benchmark
-From the `Iot_bot` folder, execute:
+### Step 2: Run the Live Demonstration / Review Panel
+To launch the unified interactive review dashboard:
 ```powershell
-python fulldataset_implementation/scripts/03_evaluate_paper_table9.py
+.\run_live_panel_demo.bat
 ```
-*Execution time:* **~8.0 seconds** across all 10 full Leave-One-Subclass-Out experiments.
-
-### Step 3: Run the Open-Set Zero-Day Anomaly Engine
-To evaluate the 5-signal geometric and free-energy engine on pure alien attack rejection:
+Or execute the Python server directly:
 ```powershell
-python fulldataset_implementation/scripts/02c_ultimate_zero_day_engine.py
+python run_live_panel_demo.py
 ```
-
-### Generated CSV Artifacts
-- **Table 9 Replication Metrics:** `fulldataset_implementation/outputs/loao_evaluations/paper_table9_reproduction_metrics.csv`
-- **Open-Set Anomaly Metrics:** `fulldataset_implementation/outputs/loao_evaluations/loao_ultimate_standard_metrics.csv`
 
 ---
 
 ## 📁 7. Cleaned & Organized Repository Structure
 
 ```text
-d:/p01/
-├── dataset/                                           # Dedicated raw dataset directory
-│   ├── data_1.csv ... data_74.csv                     # All 74 UNSW Bot-IoT CSV files (73.3M flows)
-│   └── data_names.csv                                 # Header feature names definition
+├── Final_Proposed_Solution/                       # Full UNSW Bot-IoT Zero-Day Pipeline
+│   ├── 01_Data_Preprocessing/                     # Streaming cleaner & stratified sampling
+│   ├── 02_Tier1_Known_Classification/             # Tier-1 balanced multi-class classifier
+│   ├── 03_Tier2_ZeroDay_Detection/                # Tier-2 five-signal zero-day detection engine
+│   ├── 04_Paper_Table9_Benchmark/                 # Official Table 9 comparative benchmarks
+│   ├── 05_Integrity_Audit/                        # Rigorous zero-data-leakage verification
+│   ├── 06_Presentation_Dashboards/                # 300 DPI high-resolution figures & charts
+│   └── 07_Final_Reports/                          # Comprehensive evaluation reports
 │
-└── Iot_bot/                                           # Main project codebase
-    ├── README.md                                      # Master project documentation
-    │
-    ├── outputs/                                       # Centralized outputs & results
-    │   ├── audit_reports/                             # Dual evaluation audit metrics (known & zero-day)
-    │   ├── dataset_audit/                             # Full 74-file distribution & audit tables
-    │   ├── loao_evaluations/                          # Official Table 9 reproduction & ultimate benchmarks
-    │   ├── plots/                                     # All 11 publication-grade PNG charts
-    │   ├── reports/                                   # Generated comprehensive markdown reports
-    │   └── weights_and_thresholds/                    # Learned simplex weights & adaptive thresholds
-    │
-    ├── fulldataset_implementation/                    # Production pipeline implementation
-    │   ├── configs/                                   # Pipeline hyperparameters (config.yaml)
-    │   ├── data/                                      # Cleaned balanced corpus (fulldataset_cleaned_sample.parquet)
-    │   ├── models/                                    # Serialized XGBoost models (.json)
-    │   ├── reports/                                   # Research report outputs
-    │   └── scripts/                                   # Production executable scripts
-    │       ├── 01_stream_clean_full_dataset.py        # Streaming cleaner & stratified sampler
-    │       ├── 02c_ultimate_zero_day_engine.py        # Multi-signal open-set zero-day anomaly engine
-    │       ├── 03_evaluate_paper_table9.py            # Official Table 9 reproduction benchmark
-    │       ├── 03_generate_comprehensive_plots.py     # Publication figure generator
-    │       ├── 04_generate_final_report.py            # Markdown report generator
-    │       ├── common_utils.py                        # Signal extractors, normalizers & optimizers
-    │       ├── generate_comparison_plots.py           # Baseline vs advanced comparison plotter
-    │       ├── rigorous_dual_evaluation_audit.py      # Dual evaluation audit (leakage assertions)
-    │       └── train_balanced_multiclass_ids.py       # Tier 1 balanced multi-class classifier
-    │
-    ├── old_versions/                                  # Archived historical versions & prototypes
-    │   ├── README.md                                  # Archive documentation
-    │   └── legacy_experiments/                        # Preliminary prototype steps (step4 to step10)
-    │
-    └── experiments/                                   # Backward-compatibility link to old_versions
+├── Final_Proposed_Solution_CIC18/                 # Complete CIC-IDS-2018 Zero-Day Implementation
+│   ├── 01_Data_Preprocessing/
+│   ├── 02_Tier1_Known_Classification/
+│   ├── 03_Tier2_ZeroDay_Detection/
+│   ├── 04_Paper_Table9_Benchmark/
+│   ├── 05_Integrity_Audit/
+│   ├── 06_Presentation_Dashboards/
+│   ├── 07_Final_Reports/
+│   └── 08_Interactive_Panel_Review_Dashboard/
+│
+├── Final_Proposed_Solution_IoT23/                 # Complete IoT-23 Zero-Day Implementation
+│   ├── 01_Data_Preprocessing/
+│   ├── 02_Tier1_Known_Classification/
+│   ├── 03_Tier2_ZeroDay_Detection/
+│   ├── 04_Paper_Table9_Benchmark/
+│   ├── 05_Integrity_Audit/
+│   ├── 06_Presentation_Dashboards/
+│   ├── 07_Final_Reports/
+│   └── 08_Interactive_Panel_Review_Dashboard/
+│
+├── Live_Demonstration/                            # Live demonstration scripts and assets
+├── run_live_panel_demo.bat                        # One-click interactive review panel launcher
+├── run_live_panel_demo.py                         # Local server & dashboard orchestrator
+└── README.md                                      # Master project documentation
 ```
+
+

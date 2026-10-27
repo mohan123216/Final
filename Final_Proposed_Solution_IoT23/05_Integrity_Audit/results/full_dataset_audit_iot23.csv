@@ -1,0 +1,13 @@
+Class,Total_Flows
+Attack - Attack,1374
+Botnet - Okiru,5000
+C&C - C&C,5000
+C&C - C&C-FileDownload,44
+C&C - C&C-HeartBeat,216
+C&C - C&C-HeartBeat-FileDownload,11
+C&C - C&C-Mirai,1
+C&C - C&C-Torii,30
+DDoS - DDoS,5000
+FileDownload - FileDownload,16
+Normal - Normal,10000
+PortScan - HorizontalPortScan,5000

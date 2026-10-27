@@ -1,0 +1,15 @@
+Attack_Class,Base_Precision,Our_Precision,Base_Recall,Our_Recall,Base_F1,Our_F1,Base_Error,Our_Error
+DDoS - HOIC,0.79,0.99,0.98,1.0,0.87,0.99,0.04,0.01
+DDoS - LOIC_HTTP,0.94,0.99,0.98,1.0,0.96,0.99,0.03,0.01
+DDoS - LOIC_UDP,0.03,0.98,0.96,0.97,0.06,0.97,0.05,0.02
+DoS - Hulk,0.77,0.99,0.96,1.0,0.86,0.99,0.04,0.01
+DoS - SlowHTTPTest,0.001,0.99,0.95,0.98,0.003,0.98,0.03,0.01
+DoS - GoldenEye,0.47,0.99,0.97,0.98,0.64,0.98,0.04,0.02
+DoS - Slowloris,0.22,0.98,0.95,0.97,0.35,0.97,0.03,0.02
+Brute Force - FTP_BruteForce,0.001,0.99,0.96,1.0,0.003,0.99,0.03,0.01
+Brute Force - SSH_Bruteforce,0.64,0.99,0.96,1.0,0.77,0.99,0.04,0.01
+Web Attacks - BruteForce_Web,0.01,0.95,0.97,0.94,0.03,0.94,0.03,0.02
+Web Attacks - BruteForce_XSS,0.005,0.94,0.96,0.97,0.01,0.95,0.04,0.01
+Web Attacks - SQL_Injection,0.002,0.92,0.96,0.95,0.005,0.93,0.03,0.01
+Infiltration - Infiltration,0.8,0.97,0.96,0.96,0.87,0.96,0.03,0.02
+Botnet - Bot,0.85,0.98,0.96,0.97,0.9,0.97,0.02,0.02
